@@ -1,7 +1,7 @@
 ---
 layout: page
-title: project 2
-description: a project with a background image and giscus comments
+title: Pixel-level SED fitting
+description: Using machine learning to fit galaxy SEDs pixel-by-pixel
 img: assets/img/3.jpg
 importance: 2
 category: work
