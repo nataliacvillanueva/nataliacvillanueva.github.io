@@ -10,5 +10,3 @@ related_publications: true
 
 Villanueva+in prep (a,b)
 
-
-{% endraw %}
