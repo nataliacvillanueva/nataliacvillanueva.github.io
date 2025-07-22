@@ -398,9 +398,9 @@ ninja.data = [{
           description: "Measuring multiwavelength galaxy sizes at z~4-5",
           section: "Projects",handler: () => {
               window.location.href = "/projects/1_project/";
-            },},{id: "projects-project-2",
-          title: 'project 2',
-          description: "a project with a background image and giscus comments",
+            },},{id: "projects-pixel-level-sed-fitting",
+          title: 'Pixel-level SED fitting',
+          description: "Using machine learning to fit galaxy SEDs pixel-by-pixel",
           section: "Projects",handler: () => {
               window.location.href = "/projects/2_project/";
             },},{id: "projects-project-3-with-very-long-name",
