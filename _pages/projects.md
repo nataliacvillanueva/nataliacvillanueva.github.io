@@ -27,8 +27,8 @@ We explore how galaxies build-up their stellar mass spatially at $z \sim 4-5$. W
 
 {% include figure.liquid 
    path="assets/img/ssfrmap_examples.png.001.png"
-   caption="Pixel-by-pixel sSFR maps for two example galaxies from our JWST sample,
-   at z=0.94 (top) and z=4.86 (bottom), derived from SED fitting with BAGPIPES."
+   caption="Pixel-by-pixel sSFR maps for two galaxies from our JWST sample,
+   at z=0.94 (left) and z=4.86 (right)."
    class="img-fluid rounded mx-auto d-block text-center"
    width="90%"
 %}
