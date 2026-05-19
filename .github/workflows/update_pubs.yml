@@ -21,7 +21,7 @@ jobs:
       - name: Run update script
         env:
           ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
-        run: python scripts/update_publications.py
+        run: python _scripts/update_publications.py
 
       - name: Commit and push if changed
         run: |
