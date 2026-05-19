@@ -7,7 +7,7 @@ nav: true
 nav_order: 1
 ---
 
-#### ***<span style="color:#B91FB1;">I investigate how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I apply spatially-resolved analysis techniques to observations from JWST to connect the physical processes driving star formation to the structural properties we observe.</span>***
+##### ***<span style="color:#B91FB1;">I investigate how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I apply spatially-resolved analysis techniques to observations from JWST to connect the physical processes driving star formation to the structural properties we observe.</span>***
 
 ---
 
@@ -25,14 +25,14 @@ We explore how galaxies build-up their stellar mass spatially at $z \sim 4-5$. W
 
 ## **Spatially-resolved star formation across cosmic time**
 
+The structure of a galaxy encodes the physical processes driving its growth, but measuring spatially-resolved properties across large samples has historically been computationally challenging. We address this with a machine learning algorithm that performs SED fitting per-pixel (following the work in [P. Iglesias-Navarro, incl. N. Villanueva](https://www.aanda.org/articles/aa/full_html/2025/11/aa55810-25/aa55810-25.html)), which fits SED galaxy properties in fractions of a second per-pixel, and scales to entire photometric catalogs. 
+
+From pixel-by-pixel maps of star formation properties (specifically specific star formation rate, sSFR) for a pilot sample of hundreds of massive galaxies over cosmic time, we construct radial sSFR profiles stacked across bins of stellar mass, star formation activity, and redshift. These large-scale population trends constrain the timescales and physical processes driving different regimes of galaxy growth, and which frameworks for the assembly of stellar mass dominate different types of galaxies at different epochs of cosmic time.
+
 {% include figure.liquid 
-   path="assets/img/ssfrmap_examples.png.001.png"
+   path="assets/img/ssfrmap_examples.png"
    caption="Pixel-by-pixel sSFR maps for two galaxies from our JWST sample,
    at z=0.94 (left) and z=4.86 (right)."
    class="img-fluid rounded mx-auto d-block text-center"
    width="90%"
 %}
-
-The structure of a galaxy encodes the physical processes driving its growth, but measuring spatially-resolved properties across large samples has historically been computationally challenging. We address this with a machine learning algorithm that performs SED fitting per-pixel (following the work in [P. Iglesias-Navarro, incl. N. Villanueva](https://www.aanda.org/articles/aa/full_html/2025/11/aa55810-25/aa55810-25.html)), which fits SED galaxy properties in fractions of a second per-pixel, and scales to entire photometric catalogs. 
-
-From pixel-by-pixel maps of star formation properties (specifically specific star formation rate, sSFR) for a pilot sample of hundreds of massive galaxies over cosmic time, we construct radial sSFR profiles stacked across bins of stellar mass, star formation activity, and redshift. These large-scale population trends constrain the timescales and physical processes driving different regimes of galaxy growth, and which frameworks for the assembly of stellar mass dominate different types of galaxies at different epochs of cosmic time.
