@@ -5,7 +5,7 @@ from datetime import datetime
 ads.config.token = os.environ["ADS_API_KEY"]
 
 query = ads.SearchQuery(
-    q='orcid:0000-0001-6917-4656 AND (property:refereed OR property:arxiv)',  # refine with ORCID if you have one
+    q='orcid:0000-0001-6917-4656 doctype:article',  # refine with ORCID if you have one
     fl=["bibcode", "author", "title", "pub", "pubdate", "year",
         "volume", "page", "doi", "doctype", "identifier"],
     sort="pubdate desc",
