@@ -1,0 +1,32 @@
+name: Update Publications
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # every Monday at 6am UTC
+  workflow_dispatch:        # manual trigger button in GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install ads
+
+      - name: Run update script
+        env:
+          ADS_API_KEY: ${{ secrets.ADS_API_KEY }}
+        run: python scripts/update_publications.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add publications.md
+          git diff --staged --quiet || git commit -m "Auto-update publications [skip ci]"
+          git push
