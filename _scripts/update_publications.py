@@ -4,47 +4,41 @@ from datetime import datetime
 
 ads.config.token = os.environ["ADS_API_KEY"]
 
-# Adjust query to your name/ORCID — ORCID is most reliable
 query = ads.SearchQuery(
-    q='orcid:0000-0000-0000-0000',  # or: author:("Song, N.")
+    q='orcid:0000-0001-6917-4656 doctype:(article OR eprint)',  # refine with ORCID if you have one
     fl=["bibcode", "author", "title", "pub", "pubdate", "year",
-        "volume", "page", "doi", "doctype", "citation_count"],
+        "volume", "page", "doi", "doctype", "identifier"],
     sort="pubdate desc",
     max_pages=100,
 )
 papers = list(query)
 
-# Separate first-author vs. co-author
-first_author, coauthor = [], []
-MY_LAST = "Song"  # adjust
-for p in papers:
-    if p.author and MY_LAST.lower() in p.author[0].lower():
-        first_author.append(p)
-    else:
-        coauthor.append(p)
-
-def format_paper(p):
-    authors = ", ".join(p.author[:6]) if p.author else "—"
-    if len(p.author) > 6:
-        authors += " et al."
-    title = p.title[0] if p.title else "Untitled"
-    journal = p.pub or ""
+def to_bibtex(p):
+    authors = " and ".join(p.author) if p.author else ""
+    title = p.title[0] if p.title else ""
     year = p.year or ""
-    doi_link = f" [DOI](https://doi.org/{p.doi[0]})" if p.doi else ""
-    ads_link = f" [ADS](https://ui.adsabs.harvard.edu/abs/{p.bibcode})"
-    citations = f" ({p.citation_count} citations)" if p.citation_count else ""
-    return f"- **{title}**  \n  {authors}  \n  *{journal}* ({year}){citations}{doi_link}{ads_link}\n"
+    journal = p.pub or ""
+    volume = p.volume or ""
+    page = p.page[0] if p.page else ""
+    doi = p.doi[0] if p.doi else ""
+    bibcode = p.bibcode or ""
+    doctype = p.doctype or "article"
 
-lines = [
-    f"# Publications\n",
-    f"*Auto-updated {datetime.utcnow().strftime('%Y-%m-%d')} from NASA ADS.*\n",
-    f"## First Author ({len(first_author)})\n",
-]
-lines += [format_paper(p) for p in first_author]
-lines += [f"\n## Co-authored ({len(coauthor)})\n"]
-lines += [format_paper(p) for p in coauthor]
+    entry = f"@{doctype}{{{bibcode},\n"
+    entry += f"  author = {{{authors}}},\n"
+    entry += f"  title = {{{title}}},\n"
+    entry += f"  journal = {{{journal}}},\n"
+    entry += f"  year = {{{year}}},\n"
+    if volume: entry += f"  volume = {{{volume}}},\n"
+    if page:   entry += f"  pages = {{{page}}},\n"
+    if doi:    entry += f"  doi = {{{doi}}},\n"
+    entry += f"  adsurl = {{https://ui.adsabs.harvard.edu/abs/{bibcode}}},\n"
+    entry += "}\n"
+    return entry
 
-with open("publications.md", "w") as f:
-    f.write("\n".join(lines))
+bibtex = "\n".join(to_bibtex(p) for p in papers)
 
-print(f"Written {len(papers)} papers.")
+with open("_bibliography/papers.bib", "w") as f:
+    f.write(bibtex)
+
+print(f"Written {len(papers)} papers to _bibliography/papers.bib")
