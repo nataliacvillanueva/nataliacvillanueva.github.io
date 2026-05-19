@@ -7,7 +7,7 @@ nav: true
 nav_order: 1
 ---
 
-#### <span style="color:#9c27b0;">I focus on understanding how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I use spatially-resolved observations from JWST to connect the physical processes driving star formation to the structural properties we observe.</span>
+###### <span style="color:#9c27b0;">**I investigate how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I apply spatially-resolved analysis techniques to observations from JWST to connect the physical processes driving star formation to the structural properties we observe.**</span>
 
 ---
 
