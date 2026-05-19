@@ -7,7 +7,7 @@ nav: true
 nav_order: 1
 ---
 
-###### **<span style="color:#9c27b0;">I investigate how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I apply spatially-resolved analysis techniques to observations from JWST to connect the physical processes driving star formation to the structural properties we observe.</span>**
+###### **<span style="color:#B91FB1;">I investigate how galaxies grow, evolve, and build-up their stellar mass across cosmic time. I apply spatially-resolved analysis techniques to observations from JWST to connect the physical processes driving star formation to the structural properties we observe.</span>**
 
 ---
 
@@ -30,7 +30,6 @@ We explore how galaxies build-up their stellar mass spatially at $z \sim 4-5$. W
    caption="Pixel-by-pixel sSFR maps for two example galaxies from our JWST sample,
    at z=0.94 (top) and z=4.86 (bottom), derived from SED fitting with BAGPIPES."
    class="img-fluid rounded float-end ms-3 mb-2"
-   style="max-width:100px;"
 %}
 
 The structure of a galaxy encodes the physical processes driving its growth, but measuring spatially-resolved properties across large samples has historically been computationally challenging. We address this with a machine learning algorithm that performs SED fitting per-pixel (following the work in [P. Iglesias-Navarro, incl. N. Villanueva](https://www.aanda.org/articles/aa/full_html/2025/11/aa55810-25/aa55810-25.html)), which fits SED galaxy properties in fractions of a second per-pixel, and scales to entire photometric catalogs. 
