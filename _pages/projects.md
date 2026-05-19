@@ -19,7 +19,7 @@ We explore how galaxies build-up their stellar mass spatially at $z \sim 4-5$. W
    caption="Example Forcepho morphological fits for a $z \sim 4-5$ galaxy.
    The rest-optical continuum morphology is used to continuum-subtract and isolate $H\alpha$ emission."
    class="img-fluid rounded mx-auto d-block text-center"
-   width="80%" %}
+   width="90%" %}
 
 ---
 
