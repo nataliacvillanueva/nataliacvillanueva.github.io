@@ -28,7 +28,7 @@ ninja.data = [{
           description: "",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/assets/pdf/Natalia_Villanueva_CV_5626.pdf";
+            window.location.href = "/assets/pdf/Natalia_Villanueva_CV_52626.pdf";
           },
         },{id: "post-a-post-with-image-galleries",
       
