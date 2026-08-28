@@ -133,6 +133,10 @@
   .ftoggle input{accent-color: var(--sf); width:14px; height:14px; cursor:pointer;}
   .ftoggle .swatch{width:10px; height:10px; border-radius:2px; flex-shrink:0;}
   .ftoggle.on{color:var(--text);}
+  .toggle-divider{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--text-dimmer); margin:12px 0 2px; padding-top:10px; border-top:1px solid var(--grid-soft);
+  }
 
   .stage{
     background:var(--panel); border:1px solid var(--border); border-radius:10px;
@@ -191,7 +195,7 @@
       <p class="eyebrow">Redshift · SED · Instrument Coverage</p>
       <h1>Spectrum <span class="accent">↔</span> Filter Explorer</h1>
     </div>
-    <p class="sub">Toggle a galaxy / stellar-population template, slide in redshift, and see which JWST, HST, and ground-based filters land on which spectral features.</p>
+    <p class="sub">Toggle a galaxy / stellar-population template, slide in redshift, and see which JWST/HST imaging filters — and which JWST NIRSpec, NIRISS, NIRCam grism, or MIRI spectroscopic modes — land on which spectral features.</p>
   </header>
 
   <div class="controls">
@@ -221,7 +225,7 @@
   </div>
 
   <div class="stage">
-    <svg id="plot" viewBox="0 0 1040 660" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="plot" viewBox="0 0 1040 860" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="legend" id="legend"></div>
   </div>
 
@@ -230,7 +234,7 @@
       <p class="panel-label" style="padding:0 6px;">Feature → filter coverage at current z</p>
       <table>
         <thead>
-          <tr><th>Feature</th><th>λ rest</th><th>λ obs</th><th>Filters covering it</th></tr>
+          <tr><th>Feature</th><th>λ rest</th><th>λ obs</th><th>Imaging filters</th><th>JWST spectroscopy</th></tr>
         </thead>
         <tbody id="featTableBody"></tbody>
       </table>
@@ -244,7 +248,7 @@
   </div>
 
   <p class="note">
-    Continuum shapes and line ratios are stylized to be representative of each class (UV/optical slope, Balmer/4000&#8491; break behavior, PAH complex, hot-dust/torus rise, nebular line ratios) — this is a pedagogical tool, not a stellar-population-synthesis or photoionization model. Filter wavelength ranges are approximate (roughly FWHM) bandpasses for JWST NIRCam / MIRI, HST ACS / WFC3, and representative ground-based imagers (Subaru HSC, VISTA); consult the relevant instrument handbook for precise throughput curves before using this for proposal-grade planning. Flux is in arbitrary units and includes only a rough 1/(1+z) surface-brightness dimming term, not a full cosmological k-correction.
+    Continuum shapes and line ratios are stylized to be representative of each class (UV/optical slope, Balmer/4000&#8491; break behavior, PAH complex, hot-dust/torus rise, nebular line ratios) — this is a pedagogical tool, not a stellar-population-synthesis or photoionization model. Imaging filter ranges are approximate (roughly FWHM) bandpasses for JWST NIRCam / MIRI, HST ACS / WFC3, and representative ground-based imagers (Subaru HSC, VISTA). Spectroscopic mode coverage (NIRSpec PRISM/gratings, NIRISS SOSS/WFSS, NIRCam WFSS grisms, MIRI LRS/MRS) is likewise approximate — nominal wavelength range only, ignoring detector gaps, order overlap, and the fact that MIRI MRS/NIRSpec gratings are split across separate exposures/settings. Rest-frame axis ticks re-label the same physical points as the observed axis using λ/(1+z) at the current redshift; they are not an independent physical scale. Consult the relevant JWST/HST instrument handbook for precise throughput curves and mode details before using this for proposal-grade planning. Flux is in arbitrary units and includes only a rough 1/(1+z) surface-brightness dimming term, not a full cosmological k-correction.
   </p>
 </div>
 
@@ -376,13 +380,46 @@ const FILTERS = [
   ...['Y,0.97,1.09','J,1.17,1.33','H,1.49,1.78','Ks,2.03,2.37'].map(s=>{const [n,a,b]=s.split(',');return {group:'ground', inst:'VISTA', name:n, min:+a, max:+b};}),
 ];
 
-const GROUPS = [
-  {key:'nircam_w', label:'JWST NIRCam — Wide', color:'var(--c-nircam-w)', hex:'#3ddc97', on:true},
-  {key:'nircam_m', label:'JWST NIRCam — Medium', color:'var(--c-nircam-m)', hex:'#1fa876', on:false},
-  {key:'miri', label:'JWST MIRI', color:'var(--c-miri)', hex:'#ff6b4a', on:false},
-  {key:'hst', label:'HST (ACS / WFC3)', color:'var(--c-hst-acs)', hex:'#5b8def', on:true},
-  {key:'ground', label:'Ground (HSC / VISTA)', color:'var(--c-ground)', hex:'#b7c66e', on:false},
+const SPEC_MODES = [
+  // NIRSpec
+  {group:'nirspec', inst:'NIRSpec Prism (R~100)', name:'PRISM/CLEAR', min:0.60, max:5.30},
+  {group:'nirspec', inst:'NIRSpec Med-R (R~1000)', name:'G140M/F070LP', min:0.70, max:1.27},
+  {group:'nirspec', inst:'NIRSpec Med-R (R~1000)', name:'G140M/F100LP', min:0.97, max:1.84},
+  {group:'nirspec', inst:'NIRSpec Med-R (R~1000)', name:'G235M/F170LP', min:1.66, max:3.07},
+  {group:'nirspec', inst:'NIRSpec Med-R (R~1000)', name:'G395M/F290LP', min:2.87, max:5.10},
+  {group:'nirspec', inst:'NIRSpec High-R (R~2700)', name:'G140H/F070LP', min:0.81, max:1.27},
+  {group:'nirspec', inst:'NIRSpec High-R (R~2700)', name:'G140H/F100LP', min:0.97, max:1.82},
+  {group:'nirspec', inst:'NIRSpec High-R (R~2700)', name:'G235H/F170LP', min:1.66, max:3.05},
+  {group:'nirspec', inst:'NIRSpec High-R (R~2700)', name:'G395H/F290LP', min:2.87, max:5.14},
+  // NIRISS
+  {group:'niriss', inst:'NIRISS SOSS (R~700)', name:'SOSS Ord.1', min:0.60, max:2.80},
+  {group:'niriss', inst:'NIRISS SOSS (R~700)', name:'SOSS Ord.2', min:0.60, max:1.40},
+  {group:'niriss', inst:'NIRISS WFSS (R~150)', name:'GR150C', min:0.80, max:2.20},
+  {group:'niriss', inst:'NIRISS WFSS (R~150)', name:'GR150R', min:0.80, max:2.20},
+  // NIRCam grism (WFSS)
+  {group:'nircam_grism', inst:'NIRCam WFSS (R~1600)', name:'F322W2', min:2.4, max:4.0},
+  {group:'nircam_grism', inst:'NIRCam WFSS (R~1600)', name:'F356W', min:3.1, max:4.0},
+  {group:'nircam_grism', inst:'NIRCam WFSS (R~1600)', name:'F444W', min:3.9, max:5.0},
+  // MIRI spectroscopy
+  {group:'miri_spec', inst:'MIRI LRS (R~100)', name:'LRS', min:5.0, max:12.0},
+  {group:'miri_spec', inst:'MIRI MRS (R~1500\u20133700)', name:'Ch1', min:4.90, max:7.65},
+  {group:'miri_spec', inst:'MIRI MRS (R~1500\u20133700)', name:'Ch2', min:7.51, max:11.87},
+  {group:'miri_spec', inst:'MIRI MRS (R~1500\u20133700)', name:'Ch3', min:11.55, max:18.02},
+  {group:'miri_spec', inst:'MIRI MRS (R~1500\u20133700)', name:'Ch4', min:17.71, max:28.70},
 ];
+
+const GROUPS = [
+  {key:'nircam_w', label:'JWST NIRCam — Wide', hex:'#3ddc97', on:true, kind:'phot'},
+  {key:'nircam_m', label:'JWST NIRCam — Medium', hex:'#1fa876', on:false, kind:'phot'},
+  {key:'miri', label:'JWST MIRI (imaging)', hex:'#ff6b4a', on:false, kind:'phot'},
+  {key:'hst', label:'HST (ACS / WFC3)', hex:'#5b8def', on:true, kind:'phot'},
+  {key:'ground', label:'Ground (HSC / VISTA)', hex:'#b7c66e', on:false, kind:'phot'},
+  {key:'nirspec', label:'NIRSpec (prism + gratings)', hex:'#f2c14e', on:false, kind:'spec'},
+  {key:'niriss', label:'NIRISS (SOSS / WFSS)', hex:'#f2789f', on:false, kind:'spec'},
+  {key:'nircam_grism', label:'NIRCam grism (WFSS)', hex:'#c48fe0', on:false, kind:'spec'},
+  {key:'miri_spec', label:'MIRI (LRS / MRS)', hex:'#ffab91', on:false, kind:'spec'},
+];
+const ALL_FILTERS = FILTERS.concat(SPEC_MODES);
 
 /* ============================== STATE ============================== */
 const state = { type:'sf', z:2.0, logScale:true };
@@ -428,7 +465,12 @@ function setAxisBtns(){
 }
 
 const filterToggles = document.getElementById('filterToggles');
+let dividerAdded=false;
 GROUPS.forEach(g=>{
+  if(g.kind==='spec' && !dividerAdded){
+    const div=document.createElement('div'); div.className='toggle-divider'; div.textContent='JWST spectroscopy';
+    filterToggles.appendChild(div); dividerAdded=true;
+  }
   const label=document.createElement('label');
   label.className='ftoggle'+(g.on?' on':'');
   label.innerHTML = `<input type="checkbox" ${g.on?'checked':''}><span class="swatch" style="background:${g.hex}"></span>${g.label}`;
@@ -454,7 +496,7 @@ const NS = 'http://www.w3.org/2000/svg';
 const el = (tag,attrs={})=>{ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; };
 
 const LAM_MIN=0.18, LAM_MAX=30;
-const PX = {x0:96, x1:1020, specY0:20, specY1:330, filY0:352, filY1:648};
+const PX = {x0:96, x1:1020, specY0:66, specY1:376, filY0:398, filY1:800};
 
 function xToPx(lam){
   if(state.logScale){
@@ -498,6 +540,18 @@ function render(){
   });
   svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:PX.filY1+40,class:'axis-label','text-anchor':'middle'})).textContent='observed wavelength';
 
+  // ---- rest-frame axis (top) — same physical points, relabeled by λ/(1+z) ----
+  majorTicks.forEach(v=>{
+    if(v<LAM_MIN||v>LAM_MAX) return;
+    const px=xToPx(v);
+    svg.appendChild(el('line',{x1:px,x2:px,y1:PX.specY0-14,y2:PX.specY0-2,class:'grid-line'}));
+    const restV = v/(1+state.z);
+    const lbl = restV<1 ? restV.toFixed(restV<0.1?3:2) : restV.toFixed(restV<10?1:0);
+    const t = el('text',{x:px,y:PX.specY0-18,class:'tick-label','text-anchor':'middle',fill:'var(--text-dimmer)'}); t.textContent=lbl;
+    svg.appendChild(t);
+  });
+  svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:PX.specY0-32,class:'axis-label','text-anchor':'middle'})).textContent=`rest-frame wavelength at z = ${state.z.toFixed(2)}  (µm)`;
+
   // ---- y gridlines for spectrum ----
   [0.25,0.5,0.75,1.0].forEach(frac=>{
     const py = PX.specY1-frac*(PX.specY1-PX.specY0);
@@ -540,40 +594,58 @@ function render(){
   svg.appendChild(el('text',{x:PX.x0,y:PX.specY1+7,class:'axis-label'})).textContent='SED (observed frame)';
   svg.appendChild(el('text',{x:PX.x0,y:PX.filY0-6,class:'axis-label'})).textContent='instrument filters';
 
-  // ---- filter rows ----
+  // ---- filter + spectroscopy rows ----
   const activeGroups = GROUPS.filter(g=>g.on).map(g=>g.key);
-  const rows = FILTERS.filter(f=>activeGroups.includes(f.group));
-  // group rows by inst, preserving group order
-  const instOrder = [];
-  rows.forEach(r=>{ if(!instOrder.includes(r.inst)) instOrder.push(r.inst); });
-  const rowH = 26, rowGap=6;
-  const totalRowsHeight = instOrder.length*(rowH+rowGap);
+  const rows = ALL_FILTERS.filter(f=>activeGroups.includes(f.group));
+  const photRows = rows.filter(f=>GROUPS.find(g=>g.key===f.group).kind==='phot');
+  const specRows = rows.filter(f=>GROUPS.find(g=>g.key===f.group).kind==='spec');
+
+  const instOrderOf = (arr)=>{ const o=[]; arr.forEach(r=>{ if(!o.includes(r.inst)) o.push(r.inst); }); return o; };
+  const photInst = instOrderOf(photRows);
+  const specInst = instOrderOf(specRows);
+
+  const rowH = 24, rowGap=5, dividerH = specInst.length ? 22 : 0;
+  const totalUnits = photInst.length + specInst.length;
+  const totalRowsHeight = totalUnits*(rowH+rowGap) + dividerH;
   const availH = PX.filY1-PX.filY0-10;
   const scaleRow = Math.min(1, availH/Math.max(totalRowsHeight,1));
-  const useRowH = rowH*scaleRow, useGap = rowGap*scaleRow;
+  const useRowH = rowH*scaleRow, useGap = rowGap*scaleRow, useDivider = dividerH*scaleRow;
 
-  instOrder.forEach((inst,ri)=>{
-    const y = PX.filY0 + 6 + ri*(useRowH+useGap);
-    const groupKey = rows.find(r=>r.inst===inst).group;
-    const groupHex = GROUPS.find(g=>g.key===groupKey).hex;
-    svg.appendChild(el('text',{x:PX.x0-8,y:y+useRowH*0.68,class:'grouprow-label','text-anchor':'end'})).textContent=inst;
-    rows.filter(r=>r.inst===inst).forEach(f=>{
-      const x0=xToPx(Math.max(f.min,LAM_MIN)), x1=xToPx(Math.min(f.max,LAM_MAX));
-      if(x1<=PX.x0||x0>=PX.x1) return;
-      const rect = el('rect',{x:x0,y:y,width:Math.max(x1-x0,1.5),height:useRowH,fill:groupHex,rx:3,class:'fbar'});
-      rect.dataset.min=f.min; rect.dataset.max=f.max;
-      svg.appendChild(rect);
-      if((x1-x0)>26){
-        const t=el('text',{x:(x0+x1)/2,y:y+useRowH*0.68,class:'flabel','text-anchor':'middle'});
-        t.setAttribute('font-size', Math.max(8,Math.min(10.5,useRowH*0.42)));
-        t.textContent=f.name;
-        svg.appendChild(t);
-      }
+  function drawInstRows(instOrder, rowsArr, startY){
+    instOrder.forEach((inst,ri)=>{
+      const y = startY + ri*(useRowH+useGap);
+      const groupKey = rowsArr.find(r=>r.inst===inst).group;
+      const groupHex = GROUPS.find(g=>g.key===groupKey).hex;
+      svg.appendChild(el('text',{x:PX.x0-8,y:y+useRowH*0.68,class:'grouprow-label','text-anchor':'end'})).textContent=inst;
+      rowsArr.filter(r=>r.inst===inst).forEach(f=>{
+        const x0=xToPx(Math.max(f.min,LAM_MIN)), x1=xToPx(Math.min(f.max,LAM_MAX));
+        if(x1<=PX.x0||x0>=PX.x1) return;
+        const rect = el('rect',{x:x0,y:y,width:Math.max(x1-x0,1.5),height:useRowH,fill:groupHex,rx:3,class:'fbar'});
+        rect.dataset.min=f.min; rect.dataset.max=f.max;
+        svg.appendChild(rect);
+        if((x1-x0)>26){
+          const t=el('text',{x:(x0+x1)/2,y:y+useRowH*0.68,class:'flabel','text-anchor':'middle'});
+          t.setAttribute('font-size', Math.max(8,Math.min(10.5,useRowH*0.42)));
+          t.textContent=f.name;
+          svg.appendChild(t);
+        }
+      });
     });
-  });
+  }
+
+  let cursorY = PX.filY0 + 6;
+  drawInstRows(photInst, photRows, cursorY);
+  cursorY += photInst.length*(useRowH+useGap);
+  if(specInst.length){
+    const dy = cursorY + useDivider*0.35;
+    svg.appendChild(el('line',{x1:PX.x0,x2:PX.x1,y1:dy,y2:dy,stroke:'var(--border)','stroke-width':1}));
+    svg.appendChild(el('text',{x:PX.x0,y:dy-4,class:'axis-label',fill:'var(--text-dimmer)'})).textContent='JWST spectroscopy (dispersers / gratings)';
+    cursorY += useDivider;
+    drawInstRows(specInst, specRows, cursorY);
+  }
 
   if(rows.length===0){
-    svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:(PX.filY0+PX.filY1)/2,'text-anchor':'middle',fill:'var(--text-dimmer)','font-family':"'IBM Plex Mono', monospace",'font-size':12})).textContent='no filter set enabled — toggle one above';
+    svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:(PX.filY0+PX.filY1)/2,'text-anchor':'middle',fill:'var(--text-dimmer)','font-family':"'IBM Plex Mono', monospace",'font-size':12})).textContent='no filter or spectroscopy set enabled — toggle one above';
   }
 
   // ---- crosshair + hover overlay ----
@@ -602,8 +674,9 @@ function render(){
     hoverBox.setAttribute('transform',`translate(${hbX},${PX.specY0+4})`);
     hoverBox.style.opacity=1;
     hbText1.textContent = `λ_obs = ${lam<1?lam.toFixed(3):lam.toFixed(2)} µm`;
-    const hits = FILTERS.filter(f=> GROUPS.find(g=>g.key===f.group).on && lam>=f.min && lam<=f.max).map(f=>f.name);
-    hbText2.textContent = hits.length ? 'in: '+hits.join(', ') : 'no enabled filter here';
+    const hitsAll = ALL_FILTERS.filter(f=> GROUPS.find(g=>g.key===f.group).on && lam>=f.min && lam<=f.max);
+    const hitNames = hitsAll.map(f=>f.name);
+    hbText2.textContent = hitNames.length ? 'in: '+hitNames.join(', ') : 'no enabled filter here';
 
     document.querySelectorAll('.fbar').forEach(r=>{
       const inRange = lam>=+r.dataset.min && lam<=+r.dataset.max;
@@ -613,10 +686,13 @@ function render(){
 
     // side cursor info panel
     const restLam = lam/(1+state.z);
+    const hitsPhot = hitsAll.filter(f=>GROUPS.find(g=>g.key===f.group).kind==='phot').map(f=>f.name);
+    const hitsSpec = hitsAll.filter(f=>GROUPS.find(g=>g.key===f.group).kind==='spec').map(f=>f.name);
     document.getElementById('cursorInfo').innerHTML =
       `λ<sub>obs</sub> &nbsp;<b style="color:#eef1f7">${lam<1?lam.toFixed(3):lam.toFixed(2)} µm</b><br>`+
       `λ<sub>rest</sub> (at z=${state.z.toFixed(2)}) &nbsp;<b style="color:#eef1f7">${restLam<1?restLam.toFixed(3):restLam.toFixed(2)} µm</b><br><br>`+
-      (hits.length ? `Covered by: <b style="color:${color}">${hits.join(', ')}</b>` : `<span style="color:#ef8a6a">No enabled filter covers this wavelength.</span>`);
+      `Imaging: ${hitsPhot.length ? `<b style="color:${color}">${hitsPhot.join(', ')}</b>` : '<span style="color:#ef8a6a">no enabled filter here</span>'}<br>`+
+      `Spectroscopy: ${hitsSpec.length ? `<b style="color:${color}">${hitsSpec.join(', ')}</b>` : '<span style="color:var(--text-dimmer)">none enabled / no coverage</span>'}`;
   }
   overlay.addEventListener('mousemove', e=> updateCursor(e.clientX, svg.getBoundingClientRect()));
   overlay.addEventListener('touchmove', e=>{ updateCursor(e.touches[0].clientX, svg.getBoundingClientRect()); e.preventDefault(); }, {passive:false});
@@ -632,13 +708,15 @@ function renderFeatureTable(featObs){
     const tr=document.createElement('tr');
     const kindLabel = f.kind==='abs'?'absorption':(f.kind==='feat'?'feature':'emission');
     const active = GROUPS.filter(g=>g.on);
-    const hits = FILTERS.filter(fl=>active.some(g=>g.key===fl.group) && f.obs>=fl.min && f.obs<=fl.max);
+    const hitsPhot = FILTERS.filter(fl=>active.some(g=>g.key===fl.group) && f.obs>=fl.min && f.obs<=fl.max);
+    const hitsSpec = SPEC_MODES.filter(fl=>active.some(g=>g.key===fl.group) && f.obs>=fl.min && f.obs<=fl.max);
+    const pill = h => `<span class="pill" style="background:${GROUPS.find(g=>g.key===h.group).hex}">${h.name}</span>`;
     tr.innerHTML = `
       <td><span class="feat-name">${f.name}</span><span class="feat-kind">${kindLabel}</span></td>
       <td>${f.rest<1?f.rest.toFixed(3):f.rest.toFixed(2)}&nbsp;µm</td>
       <td>${f.obs<1?f.obs.toFixed(3):f.obs.toFixed(2)}&nbsp;µm${f.obs>LAM_MAX?' (out of range)':''}</td>
-      <td>${hits.length ? `<div class="pillrow">${hits.map(h=>`<span class="pill" style="background:${GROUPS.find(g=>g.key===h.group).hex}">${h.name}</span>`).join('')}</div>` : '<span class="gap">gap — no coverage</span>'}
-      </td>`;
+      <td>${hitsPhot.length ? `<div class="pillrow">${hitsPhot.map(pill).join('')}</div>` : '<span class="gap">gap</span>'}</td>
+      <td>${hitsSpec.length ? `<div class="pillrow">${hitsSpec.map(pill).join('')}</div>` : '<span style="color:var(--text-dimmer)">—</span>'}</td>`;
     body.appendChild(tr);
   });
 }
