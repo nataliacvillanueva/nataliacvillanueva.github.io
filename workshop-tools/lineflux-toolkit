@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Line &amp; Flux Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d13;
+    --panel: #10141d;
+    --panel-2: #141926;
+    --grid-soft: #1a2030;
+    --border: #232a3a;
+    --text: #cfd6e4;
+    --text-dim: #6e7889;
+    --text-dimmer: #4b5464;
+    --sf: #4fd1c5;
+    --dusty: #e2725b;
+    --quiescent: #d4a24c;
+    --agn: #9b7ede;
+    --clump: #8be04a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 800px at 15% -10%, #101826 0%, var(--bg) 55%) fixed;
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding: 28px 28px 70px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  a.back{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dimmer);
+    text-decoration:none; display:inline-block; margin-bottom:16px;
+  }
+  a.back:hover{color:var(--sf);}
+
+  header{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+    border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:22px; gap:10px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.18em;
+    color:var(--text-dim); text-transform:uppercase; margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:24px; margin:0;
+    letter-spacing:-0.01em; color:#eef1f7;
+  }
+  h1 .accent{color:var(--sf);}
+  .sub{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-dim);
+    max-width:380px; text-align:right; line-height:1.5;
+  }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:18px 20px; margin-bottom:18px;
+  }
+  .panel-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px; color:#eef1f7;
+    margin:0 0 4px; display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .panel-note{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dimmer);
+    margin:0 0 16px; line-height:1.6;
+  }
+
+  label{
+    display:block; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--text-dimmer); margin-bottom:5px;
+  }
+  input[type=number], input[type=text], select{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:'IBM Plex Mono', monospace; font-size:13px; border-radius:6px; padding:8px 10px;
+    outline:none;
+  }
+  input[type=number]:focus, input[type=text]:focus, select:focus{border-color:var(--sf);}
+  select{cursor:pointer;}
+
+  .field{margin-bottom:12px;}
+  .row{display:grid; gap:14px;}
+  .row.cols-3{grid-template-columns:repeat(3,1fr);}
+  .row.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:720px){ .row.cols-3, .row.cols-2{grid-template-columns:1fr;} }
+
+  .z-shared{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .z-shared input[type=range]{
+    flex:1; min-width:180px; -webkit-appearance:none; height:4px; border-radius:2px;
+    background:linear-gradient(90deg,var(--sf),var(--dusty),var(--agn)); outline:none;
+  }
+  .z-shared input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:15px; height:15px; border-radius:50%;
+    background:#eef1f7; border:2px solid #0a0d13; cursor:pointer; margin-top:-1px;
+  }
+  .z-shared input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%; background:#eef1f7; border:2px solid #0a0d13; cursor:pointer;
+  }
+  .z-readout{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:18px; color:#eef1f7; min-width:70px;
+  }
+  .cosmo-toggle{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dimmer);
+    cursor:pointer; user-select:none; margin-top:10px; display:inline-block;
+  }
+  .cosmo-toggle:hover{color:var(--text-dim);}
+  .cosmo-fields{display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--grid-soft);}
+  .cosmo-fields.open{display:grid;}
+
+  .result{
+    margin-top:14px; padding:12px 14px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; font-family:'IBM Plex Mono', monospace; font-size:13px; line-height:1.9;
+  }
+  .result b{color:#eef1f7; font-weight:600;}
+  .result .big{font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:600; color:var(--sf);}
+  .result .warn{color:var(--dusty);}
+
+  .search-row{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+  .search-row input{flex:1; min-width:180px;}
+  .chip-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .chip{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dim);
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:5px 10px; cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{color:#0a0d13; background:var(--sf); border-color:var(--sf); font-weight:600;}
+  .chip:hover:not(.active){border-color:var(--text-dimmer); color:var(--text);}
+
+  table{width:100%; border-collapse:collapse; font-family:'IBM Plex Mono', monospace; font-size:12px;}
+  thead th{
+    text-align:left; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-dimmer); border-bottom:1px solid var(--border); padding:6px 8px;
+  }
+  tbody tr{border-bottom:1px solid var(--grid-soft); cursor:pointer;}
+  tbody tr:hover{background:var(--panel-2);}
+  tbody td{padding:8px 8px; color:var(--text-dim); vertical-align:top;}
+  tbody td.name{color:#eef1f7; font-weight:600;}
+  .mech-pill{
+    display:inline-block; font-size:9.5px; padding:2px 7px; border-radius:20px;
+    border:1px solid var(--border);
+  }
+  .mech-recomb{color:var(--sf); border-color:var(--sf);}
+  .mech-forbidden{color:var(--quiescent); border-color:var(--quiescent);}
+  .mech-intercomb{color:var(--agn); border-color:var(--agn);}
+  .mech-resonance{color:var(--dusty); border-color:var(--dusty);}
+  .obs-lam{font-family:'Space Grotesk', sans-serif; font-weight:600; color:var(--sf);}
+  .table-scroll{max-height:420px; overflow:auto; border:1px solid var(--grid-soft); border-radius:8px;}
+  .table-scroll table{margin:0;}
+  .table-scroll thead th{position:sticky; top:0; background:var(--panel); z-index:1;}
+
+  .legend-mech{
+    display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;
+    font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--text-dimmer);
+  }
+  .legend-mech span{display:inline-flex; align-items:center; gap:5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./index.html">← back to tools</a>
+  <header>
+    <div>
+      <p class="eyebrow">not for public consumption</p>
+      <h1>Line <span class="accent">&amp;</span> Flux Toolkit</h1>
+    </div>
+    <p class="sub">Rest↔observed wavelength conversion, an emission-line reference, and flux→AB/UV magnitude conversion — sharing one redshift.</p>
+  </header>
+
+  <!-- shared redshift -->
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--sf);"></span>Shared redshift</p>
+    <p class="panel-note">Drives the wavelength converter, the glossary's observed-wavelength column, and the absolute-magnitude calculation below.</p>
+    <div class="z-shared">
+      <span class="z-readout" id="zReadout">z = 0.00</span>
+      <input type="range" id="zSlider" min="0" max="12" step="0.01" value="0">
+      <input type="number" id="zNumber" step="0.01" style="max-width:110px;" value="0">
+    </div>
+    <span class="cosmo-toggle" id="cosmoToggle">▸ cosmology (flat ΛCDM, for the absolute-magnitude panel)</span>
+    <div class="row cols-3 cosmo-fields" id="cosmoFields">
+      <div class="field"><label>H0 (km/s/Mpc)</label><input type="number" id="h0" value="70"></div>
+      <div class="field"><label>Ωm</label><input type="number" id="omegaM" value="0.3" step="0.01"></div>
+      <div class="field"><label>ΩΛ (= 1 − Ωm)</label><input type="number" id="omegaL" value="0.7" step="0.01" disabled></div>
+    </div>
+  </div>
+
+  <!-- wavelength converter -->
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--dusty);"></span>Rest ↔ Observed Wavelength</p>
+    <p class="panel-note">λ_obs = λ_rest × (1 + z). Edit either field — the other updates using the shared z above. The unit picked here also drives the glossary table below.</p>
+    <div class="row cols-3">
+      <div class="field">
+        <label id="lamRestLabel">Rest wavelength (Å)</label>
+        <input type="number" id="lamRest" step="0.01" value="6562.80">
+      </div>
+      <div class="field">
+        <label id="lamObsLabel">Observed wavelength (Å)</label>
+        <input type="number" id="lamObs" step="0.01" value="6562.80">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <select id="waveUnit">
+          <option value="A" selected>Å (angstrom)</option>
+          <option value="nm">nm</option>
+          <option value="um">µm (micron)</option>
+        </select>
+      </div>
+    </div>
+    <div class="result" id="convResult"></div>
+  </div>
+
+  <!-- emission line glossary -->
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--agn);"></span>Emission &amp; Absorption Line Glossary</p>
+    <p class="panel-note">Rest wavelengths in vacuum. Click a row to load its rest wavelength into the converter above. Units follow the converter's unit selector.</p>
+    <div class="search-row">
+      <input type="text" id="lineSearch" placeholder="search line or ion…">
+    </div>
+    <div class="chip-row" id="mechChips" style="margin-bottom:14px;"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Line</th><th id="thRest">λ_rest (Å)</th><th id="thObs">λ_obs (Å)</th><th>Mechanism</th><th>Typical origin</th></tr>
+        </thead>
+        <tbody id="lineTableBody"></tbody>
+      </table>
+    </div>
+    <div class="legend-mech">
+      <span><span class="mech-pill mech-recomb">recombination</span> permitted H/He cascade line</span>
+      <span><span class="mech-pill mech-forbidden">forbidden</span> collisionally excited, needs low density</span>
+      <span><span class="mech-pill mech-intercomb">intercombination</span> semi-forbidden, spin-forbidden but allowed</span>
+      <span><span class="mech-pill mech-resonance">resonance</span> permitted UV transition to ground state, scatters readily</span>
+    </div>
+  </div>
+
+  <!-- flux to magnitude -->
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--clump);"></span>Flux → Magnitude</p>
+    <p class="panel-note">Converts a flux density to an AB magnitude. If your flux is f_λ, supply the wavelength so it can be converted to f_ν first.</p>
+    <div class="row cols-3">
+      <div class="field">
+        <label>Flux value</label>
+        <input type="number" id="fluxVal" value="1.0" step="any">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <select id="fluxUnit">
+          <option value="Jy">Jy</option>
+          <option value="mJy">mJy</option>
+          <option value="uJy" selected>µJy</option>
+          <option value="fnu_cgs">erg/s/cm²/Hz</option>
+          <option value="flam_cgs">erg/s/cm²/Å</option>
+        </select>
+      </div>
+      <div class="field" id="lamForFlamWrap" style="display:none;">
+        <label>Wavelength for f_λ</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" id="lamForFlam" value="1500" step="1" style="flex:1;">
+          <select id="lamForFlamUnit" style="max-width:88px;">
+            <option value="A" selected>Å</option>
+            <option value="nm">nm</option>
+            <option value="um">µm</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="result" id="magResult"></div>
+
+    <p class="panel-note" style="margin-top:18px;">Optional: convert to absolute UV magnitude (M_UV) at the shared redshift above, using M = m − 5·log10(D_L/10pc) + 2.5·log10(1+z) — the standard flat-f_ν K-correction used in UV luminosity-function work.</p>
+    <div class="result" id="absMagResult"></div>
+  </div>
+</div>
+
+<script>
+const C_ANGSTROM_PER_S = 2.99792458e18; // speed of light in Å/s
+const C_KM_S = 299792.458; // speed of light in km/s
+
+// ---------- shared redshift ----------
+const zSlider = document.getElementById('zSlider');
+const zNumber = document.getElementById('zNumber');
+const zReadout = document.getElementById('zReadout');
+let state = { z: 0 };
+
+function setZ(z, fromWhich){
+  z = Math.max(0, z);
+  state.z = z;
+  zReadout.textContent = `z = ${z.toFixed(2)}`;
+  if(fromWhich!=='slider') zSlider.value = Math.min(12, z);
+  if(fromWhich!=='number') zNumber.value = z;
+  updateConverterFromRest();
+  renderLineTable();
+  updateAbsMag();
+}
+zSlider.addEventListener('input', ()=> setZ(parseFloat(zSlider.value), 'slider'));
+zNumber.addEventListener('input', ()=> setZ(parseFloat(zNumber.value)||0, 'number'));
+
+document.getElementById('cosmoToggle').addEventListener('click', function(){
+  const f = document.getElementById('cosmoFields');
+  f.classList.toggle('open');
+  this.textContent = (f.classList.contains('open') ? '▾' : '▸') + ' cosmology (flat ΛCDM, for the absolute-magnitude panel)';
+});
+document.getElementById('omegaM').addEventListener('input', function(){
+  const om = parseFloat(this.value); document.getElementById('omegaL').value = (1-om).toFixed(3);
+  updateAbsMag();
+});
+document.getElementById('h0').addEventListener('input', updateAbsMag);
+
+// ---------- wavelength units ----------
+// factor = how many Å in one of this unit
+const UNIT_FACTOR = { A: 1, nm: 10, um: 1e4 };
+const UNIT_LABEL  = { A: 'Å', nm: 'nm', um: 'µm' };
+const UNIT_DECIMALS = { A: 2, nm: 3, um: 5 };
+let waveUnit = 'A';
+function toA(v){ return v*UNIT_FACTOR[waveUnit]; }
+function fromA(v){ return v/UNIT_FACTOR[waveUnit]; }
+function fmtWave(vInUnit){ return vInUnit.toFixed(UNIT_DECIMALS[waveUnit]); }
+
+// canonical values always stored in Å; the input fields show the current unit
+let restAngstrom = 6562.80;
+
+const lamRestEl = document.getElementById('lamRest');
+const lamObsEl = document.getElementById('lamObs');
+const convResult = document.getElementById('convResult');
+const waveUnitEl = document.getElementById('waveUnit');
+
+function updateConverterFromRest(){
+  const restDisp = parseFloat(lamRestEl.value);
+  if(isNaN(restDisp)) return;
+  restAngstrom = toA(restDisp);
+  const obsAngstrom = restAngstrom*(1+state.z);
+  lamObsEl.value = fmtWave(fromA(obsAngstrom));
+  renderConvResult(restAngstrom, obsAngstrom);
+}
+function updateConverterFromObs(){
+  const obsDisp = parseFloat(lamObsEl.value);
+  if(isNaN(obsDisp)) return;
+  const obsAngstrom = toA(obsDisp);
+  restAngstrom = obsAngstrom/(1+state.z);
+  lamRestEl.value = fmtWave(fromA(restAngstrom));
+  renderConvResult(restAngstrom, obsAngstrom);
+}
+function renderConvResult(restAng, obsAng){
+  convResult.innerHTML = `λ_rest = <b>${fmtWave(fromA(restAng))} ${UNIT_LABEL[waveUnit]}</b> &nbsp;→&nbsp; λ_obs = <span class="big">${fmtWave(fromA(obsAng))} ${UNIT_LABEL[waveUnit]}</span> &nbsp;at z = ${state.z.toFixed(2)}`;
+}
+lamRestEl.addEventListener('input', updateConverterFromRest);
+lamObsEl.addEventListener('input', updateConverterFromObs);
+
+waveUnitEl.addEventListener('change', ()=>{
+  waveUnit = waveUnitEl.value;
+  document.getElementById('lamRestLabel').textContent = `Rest wavelength (${UNIT_LABEL[waveUnit]})`;
+  document.getElementById('lamObsLabel').textContent = `Observed wavelength (${UNIT_LABEL[waveUnit]})`;
+  document.getElementById('thRest').textContent = `λ_rest (${UNIT_LABEL[waveUnit]})`;
+  document.getElementById('thObs').textContent = `λ_obs (${UNIT_LABEL[waveUnit]})`;
+  // redisplay canonical values in the new unit, without changing the physical wavelength
+  lamRestEl.value = fmtWave(fromA(restAngstrom));
+  lamObsEl.value = fmtWave(fromA(restAngstrom*(1+state.z)));
+  renderConvResult(restAngstrom, restAngstrom*(1+state.z));
+  renderLineTable();
+});
+
+// ---------- emission line glossary ----------
+const LINES = [
+  {name:'Lyα', ion:'H I', lam:1215.67, mech:'resonance', origin:'HII regions / high-z ISM & IGM scattering'},
+  {name:'N V', ion:'N V', lam:1240.14, mech:'resonance', origin:'AGN BLR, very high ionization'},
+  {name:'C IV', ion:'C IV', lam:1549.48, mech:'resonance', origin:'AGN BLR / hot massive-star winds'},
+  {name:'He II', ion:'He II', lam:1640.42, mech:'recombination', origin:'AGN / Wolf-Rayet, very high ionization'},
+  {name:'O III]', ion:'O III]', lam:1663.48, mech:'intercombination', origin:'AGN NLR / high-z star-forming galaxies'},
+  {name:'C III]', ion:'C III]', lam:1908.73, mech:'intercombination', origin:'Narrow-line AGN / high-z star-forming galaxies'},
+  {name:'Mg II', ion:'Mg II', lam:2799.12, mech:'resonance', origin:'AGN BLR, low-ionization'},
+  {name:'[O II]', ion:'[O II]', lam:3727.92, mech:'forbidden', origin:'HII regions, low-ionization tracer'},
+  {name:'[Ne III]', ion:'[Ne III]', lam:3869.86, mech:'forbidden', origin:'HII regions, higher-ionization tracer'},
+  {name:'Hδ', ion:'H I', lam:4102.89, mech:'recombination', origin:'HII regions / stellar photospheres'},
+  {name:'Hγ', ion:'H I', lam:4341.68, mech:'recombination', origin:'HII regions / stellar photospheres'},
+  {name:'Hβ', ion:'H I', lam:4862.68, mech:'recombination', origin:'HII regions — dust/SFR diagnostics'},
+  {name:'[O III]', ion:'[O III]', lam:4960.30, mech:'forbidden', origin:'HII regions / AGN NLR'},
+  {name:'[O III]', ion:'[O III]', lam:5008.24, mech:'forbidden', origin:'HII regions / AGN NLR, high-ionization tracer'},
+  {name:'He I', ion:'He I', lam:5875.62, mech:'recombination', origin:'HII regions, moderate ionization'},
+  {name:'[O I]', ion:'[O I]', lam:6300.30, mech:'forbidden', origin:'Shocks / AGN, low-ionization'},
+  {name:'Hα', ion:'H I', lam:6564.61, mech:'recombination', origin:'HII regions — primary SFR indicator'},
+  {name:'[N II]', ion:'[N II]', lam:6549.86, mech:'forbidden', origin:'Metallicity & AGN diagnostics (BPT)'},
+  {name:'[N II]', ion:'[N II]', lam:6585.27, mech:'forbidden', origin:'Metallicity & AGN diagnostics (BPT)'},
+  {name:'[S II]', ion:'[S II]', lam:6718.29, mech:'forbidden', origin:'Electron density diagnostic'},
+  {name:'[S II]', ion:'[S II]', lam:6732.67, mech:'forbidden', origin:'Electron density diagnostic'},
+  {name:'[S III]', ion:'[S III]', lam:9071.1, mech:'forbidden', origin:'HII regions, moderate ionization'},
+  {name:'[S III]', ion:'[S III]', lam:9533.2, mech:'forbidden', origin:'HII regions, moderate ionization'},
+  {name:'Paβ', ion:'H I', lam:12821.6, mech:'recombination', origin:'Dust-penetrating SFR tracer (Paschen series)'},
+  {name:'Paα', ion:'H I', lam:18756.1, mech:'recombination', origin:'Dust-penetrating SFR tracer (Paschen series)'},
+];
+const MECHS = ['recombination','forbidden','intercombination','resonance'];
+let activeMech = null;
+const chipRow = document.getElementById('mechChips');
+MECHS.forEach(m=>{
+  const c = document.createElement('span');
+  c.className='chip'; c.textContent=m; c.dataset.mech=m;
+  c.addEventListener('click', ()=>{
+    activeMech = activeMech===m ? null : m;
+    chipRow.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active', el.dataset.mech===activeMech));
+    renderLineTable();
+  });
+  chipRow.appendChild(c);
+});
+document.getElementById('lineSearch').addEventListener('input', renderLineTable);
+
+function renderLineTable(){
+  const q = document.getElementById('lineSearch').value.trim().toLowerCase();
+  const body = document.getElementById('lineTableBody');
+  body.innerHTML='';
+  LINES.filter(l=>{
+    if(activeMech && l.mech!==activeMech) return false;
+    if(q && !(l.name.toLowerCase().includes(q) || l.ion.toLowerCase().includes(q))) return false;
+    return true;
+  }).forEach(l=>{
+    const tr = document.createElement('tr');
+    const obsAngstrom = l.lam*(1+state.z);
+    tr.innerHTML = `
+      <td class="name">${l.name}</td>
+      <td>${fmtWave(fromA(l.lam))}</td>
+      <td class="obs-lam">${fmtWave(fromA(obsAngstrom))}</td>
+      <td><span class="mech-pill mech-${l.mech==='intercombination'?'intercomb':l.mech}">${l.mech}</span></td>
+      <td>${l.origin}</td>`;
+    tr.addEventListener('click', ()=>{
+      lamRestEl.value = fmtWave(fromA(l.lam));
+      updateConverterFromRest();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+    body.appendChild(tr);
+  });
+}
+
+// ---------- flux -> magnitude ----------
+const fluxVal = document.getElementById('fluxVal');
+const fluxUnit = document.getElementById('fluxUnit');
+const lamForFlamWrap = document.getElementById('lamForFlamWrap');
+const lamForFlam = document.getElementById('lamForFlam');
+const lamForFlamUnit = document.getElementById('lamForFlamUnit');
+const magResult = document.getElementById('magResult');
+const absMagResult = document.getElementById('absMagResult');
+
+fluxUnit.addEventListener('change', ()=>{
+  lamForFlamWrap.style.display = fluxUnit.value==='flam_cgs' ? 'block' : 'none';
+  updateMag();
+});
+[fluxVal, lamForFlam].forEach(el=>el.addEventListener('input', updateMag));
+lamForFlamUnit.addEventListener('change', updateMag);
+
+function fnuCgsFromInputs(){
+  const v = parseFloat(fluxVal.value);
+  if(isNaN(v)) return null;
+  const unit = fluxUnit.value;
+  if(unit==='Jy') return v*1e-23;
+  if(unit==='mJy') return v*1e-26;
+  if(unit==='uJy') return v*1e-29;
+  if(unit==='fnu_cgs') return v;
+  if(unit==='flam_cgs'){
+    const lamDisp = parseFloat(lamForFlam.value);
+    if(isNaN(lamDisp)||lamDisp<=0) return null;
+    const lamAngstrom = lamDisp*UNIT_FACTOR[lamForFlamUnit.value];
+    return v*lamAngstrom*lamAngstrom/C_ANGSTROM_PER_S;
+  }
+  return null;
+}
+
+let lastAbMag = null;
+function updateMag(){
+  const fnu = fnuCgsFromInputs();
+  if(fnu===null || fnu<=0){
+    magResult.innerHTML = `<span class="warn">enter a positive flux (and wavelength, for f_λ)</span>`;
+    lastAbMag = null; updateAbsMag(); return;
+  }
+  const mAB = -2.5*Math.log10(fnu) - 48.60;
+  lastAbMag = mAB;
+  magResult.innerHTML = `f_ν = <b>${fnu.toExponential(3)} erg s⁻¹ cm⁻² Hz⁻¹</b> &nbsp;→&nbsp; m_AB = <span class="big">${mAB.toFixed(3)}</span>`;
+  updateAbsMag();
+}
+
+// flat LCDM luminosity distance, trapezoidal integration
+function luminosityDistanceMpc(z, H0, Om){
+  if(z<=0) return 0;
+  const OL = 1-Om;
+  const Ez = zp => Math.sqrt(Om*Math.pow(1+zp,3) + OL);
+  const N = 400;
+  const dz = z/N;
+  let integral = 0.5*(1/Ez(0) + 1/Ez(z));
+  for(let i=1;i<N;i++){ integral += 1/Ez(i*dz); }
+  integral *= dz;
+  const DH = C_KM_S/H0; // Mpc
+  const DC = DH*integral;
+  return (1+z)*DC; // D_L in Mpc
+}
+
+function updateAbsMag(){
+  if(lastAbMag===null || state.z<=0){
+    absMagResult.innerHTML = `<span class="warn">${state.z<=0 ? 'set z > 0 above to compute an absolute magnitude' : 'enter a valid flux above first'}</span>`;
+    return;
+  }
+  const H0 = parseFloat(document.getElementById('h0').value)||70;
+  const Om = parseFloat(document.getElementById('omegaM').value)||0.3;
+  const DL_Mpc = luminosityDistanceMpc(state.z, H0, Om);
+  const DL_pc = DL_Mpc*1e6;
+  const DM = 5*Math.log10(DL_pc/10);
+  const M_UV = lastAbMag - DM + 2.5*Math.log10(1+state.z);
+  absMagResult.innerHTML = `D_L = <b>${DL_Mpc.toFixed(1)} Mpc</b> &nbsp;→&nbsp; M_UV = <span class="big">${M_UV.toFixed(3)}</span> &nbsp;<span style="color:var(--text-dimmer)">(H0=${H0}, Ωm=${Om})</span>`;
+}
+
+// ---------- init ----------
+renderLineTable();
+updateConverterFromRest();
+updateMag();
+setZ(0);
+</script>
+</body>
+</html>
