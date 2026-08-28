@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spectrum ↔ Filter Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d13;
+    --panel: #10141d;
+    --panel-2: #141926;
+    --grid: #232a3a;
+    --grid-soft: #1a2030;
+    --text: #cfd6e4;
+    --text-dim: #6e7889;
+    --text-dimmer: #4b5464;
+    --border: #232a3a;
+
+    --sf: #4fd1c5;
+    --dusty: #e2725b;
+    --quiescent: #d4a24c;
+    --agn: #9b7ede;
+    --clump: #8be04a;
+
+    --c-nircam-w: #3ddc97;
+    --c-nircam-m: #1fa876;
+    --c-miri: #ff6b4a;
+    --c-hst-acs: #5b8def;
+    --c-hst-wfc3: #8aa8f5;
+    --c-ground: #b7c66e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 800px at 15% -10%, #101826 0%, var(--bg) 55%) fixed;
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding: 28px 28px 60px;
+  }
+  .wrap{max-width:1360px;margin:0 auto;}
+
+  header{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+    border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:20px; gap:10px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.18em;
+    color:var(--text-dim); text-transform:uppercase; margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:26px; margin:0;
+    letter-spacing:-0.01em; color:#eef1f7;
+  }
+  h1 .accent{color:var(--sf);}
+  .sub{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-dim);
+    max-width:420px; text-align:right; line-height:1.5;
+  }
+
+  .controls{
+    display:grid;
+    grid-template-columns: minmax(260px,1.3fr) minmax(260px,1fr) minmax(260px,1fr);
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .panel-label{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--text-dimmer); margin:0 0 10px;
+  }
+
+  .type-grid{display:flex; flex-wrap:wrap; gap:8px;}
+  .type-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:12px;
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim);
+    padding:8px 12px; border-radius:7px; cursor:pointer; transition:.15s ease; position:relative;
+  }
+  .type-btn .dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:middle;}
+  .type-btn:hover{border-color:var(--text-dimmer); color:var(--text);}
+  .type-btn.active{color:#0a0d13; font-weight:600; border-color:transparent;}
+  .type-desc{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; line-height:1.6; color:var(--text-dim);
+    margin-top:12px; padding-top:12px; border-top:1px solid var(--grid-soft);
+  }
+
+  .z-row{display:flex; align-items:center; gap:12px;}
+  .z-readout{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:22px; color:#eef1f7;
+    min-width:74px;
+  }
+  input[type=range]{
+    -webkit-appearance:none; flex:1; height:4px; border-radius:2px;
+    background:linear-gradient(90deg,var(--sf),var(--dusty),var(--agn));
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:15px; height:15px; border-radius:50%;
+    background:#eef1f7; border:2px solid #0a0d13; cursor:pointer; margin-top:-1px;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%; background:#eef1f7; border:2px solid #0a0d13; cursor:pointer;
+  }
+  .z-presets{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .z-preset{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dim);
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:4px 9px; cursor:pointer;
+  }
+  .z-preset:hover{color:var(--text); border-color:var(--text-dimmer);}
+  .axis-toggle{
+    display:flex; gap:6px; margin-top:14px; padding-top:12px; border-top:1px solid var(--grid-soft);
+  }
+  .axis-toggle button{
+    flex:1; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dim);
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px; padding:6px; cursor:pointer;
+  }
+  .axis-toggle button.active{color:#0a0d13; background:var(--sf); border-color:var(--sf); font-weight:600;}
+
+  .filter-toggles{display:flex; flex-direction:column; gap:8px;}
+  .ftoggle{
+    display:flex; align-items:center; gap:9px; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    color:var(--text-dim); cursor:pointer; user-select:none;
+  }
+  .ftoggle input{accent-color: var(--sf); width:14px; height:14px; cursor:pointer;}
+  .ftoggle .swatch{width:10px; height:10px; border-radius:2px; flex-shrink:0;}
+  .ftoggle.on{color:var(--text);}
+
+  .stage{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:14px 14px 6px; margin-bottom:18px;
+  }
+  svg{display:block; width:100%; height:auto; overflow:visible; cursor:crosshair;}
+  .axis-label{font-family:'IBM Plex Mono', monospace; font-size:10.5px; fill:var(--text-dimmer);}
+  .tick-label{font-family:'IBM Plex Mono', monospace; font-size:10px; fill:var(--text-dim);}
+  .grid-line{stroke:var(--grid-soft); stroke-width:1;}
+  .grid-line.major{stroke:var(--grid);}
+  .feat-tick{stroke-width:1.4;}
+  .feat-label{font-family:'IBM Plex Mono', monospace; font-size:10px;}
+  .crosshair{stroke:#eef1f7; stroke-width:1; stroke-dasharray:3,3; opacity:0; pointer-events:none;}
+  .hover-box{opacity:0; pointer-events:none;}
+  .hover-box rect{fill:#0a0d13; stroke:var(--border);}
+  .hover-box text{font-family:'IBM Plex Mono', monospace; font-size:11px; fill:var(--text);}
+  .fbar{stroke:rgba(0,0,0,.35); stroke-width:0.5; transition:opacity .1s, filter .1s;}
+  .fbar.dim{opacity:.32;}
+  .fbar.hl{filter:brightness(1.55); stroke:#eef1f7; stroke-width:1.2;}
+  .flabel{font-family:'IBM Plex Mono', monospace; fill:#0a0d13; font-weight:600;}
+  .grouprow-label{font-family:'IBM Plex Mono', monospace; font-size:10px; fill:var(--text-dimmer);}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px; padding:10px 4px 16px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dim);}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  .lower{display:grid; grid-template-columns: 1fr 380px; gap:18px;}
+  @media (max-width:980px){ .lower{grid-template-columns:1fr;} .controls{grid-template-columns:1fr;} .sub{text-align:left;} }
+
+  .table-panel{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; max-height:560px; overflow:auto;}
+  .table-panel table{width:100%; border-collapse:collapse; font-family:'IBM Plex Mono', monospace; font-size:11.5px;}
+  .table-panel th{
+    text-align:left; color:var(--text-dimmer); font-weight:500; font-size:10px; letter-spacing:.08em;
+    text-transform:uppercase; padding:0 6px 8px; border-bottom:1px solid var(--grid); position:sticky; top:0; background:var(--panel);
+  }
+  .table-panel td{padding:8px 6px; border-bottom:1px solid var(--grid-soft); vertical-align:top;}
+  .feat-name{color:#eef1f7; font-weight:600;}
+  .feat-kind{color:var(--text-dimmer); font-size:10px; display:block; margin-top:1px;}
+  .pillrow{display:flex; flex-wrap:wrap; gap:4px;}
+  .pill{
+    font-size:10px; padding:2px 6px; border-radius:4px; color:#0a0d13; font-weight:600; white-space:nowrap;
+  }
+  .gap{color:#ef6a6a; font-weight:600;}
+
+  .note{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dimmer);
+    line-height:1.7; margin-top:22px; padding-top:16px; border-top:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Redshift · SED · Instrument Coverage</p>
+      <h1>Spectrum <span class="accent">↔</span> Filter Explorer</h1>
+    </div>
+    <p class="sub">Toggle a galaxy / stellar-population template, slide in redshift, and see which JWST, HST, and ground-based filters land on which spectral features.</p>
+  </header>
+
+  <div class="controls">
+    <div class="panel">
+      <p class="panel-label">01 · Spectral template</p>
+      <div class="type-grid" id="typeGrid"></div>
+      <div class="type-desc" id="typeDesc"></div>
+    </div>
+
+    <div class="panel">
+      <p class="panel-label">02 · Redshift</p>
+      <div class="z-row">
+        <div class="z-readout" id="zReadout">z = 2.00</div>
+        <input type="range" id="zSlider" min="0" max="14" step="0.02" value="2">
+      </div>
+      <div class="z-presets" id="zPresets"></div>
+      <div class="axis-toggle">
+        <button id="logBtn" class="active">log λ</button>
+        <button id="linBtn">linear λ</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="panel-label">03 · Filter sets shown</p>
+      <div class="filter-toggles" id="filterToggles"></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <svg id="plot" viewBox="0 0 1040 660" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="lower">
+    <div class="table-panel">
+      <p class="panel-label" style="padding:0 6px;">Feature → filter coverage at current z</p>
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>λ rest</th><th>λ obs</th><th>Filters covering it</th></tr>
+        </thead>
+        <tbody id="featTableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-panel" id="sidePanel">
+      <p class="panel-label" style="padding:0 6px;">Cursor readout</p>
+      <div id="cursorInfo" style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-dim); padding:0 6px; line-height:1.9;">
+        Move the pointer over the plot to read observed wavelength and see which filters (from the sets enabled above) contain it — including gaps where no enabled filter covers a feature.
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    Continuum shapes and line ratios are stylized to be representative of each class (UV/optical slope, Balmer/4000&#8491; break behavior, PAH complex, hot-dust/torus rise, nebular line ratios) — this is a pedagogical tool, not a stellar-population-synthesis or photoionization model. Filter wavelength ranges are approximate (roughly FWHM) bandpasses for JWST NIRCam / MIRI, HST ACS / WFC3, and representative ground-based imagers (Subaru HSC, VISTA); consult the relevant instrument handbook for precise throughput curves before using this for proposal-grade planning. Flux is in arbitrary units and includes only a rough 1/(1+z) surface-brightness dimming term, not a full cosmological k-correction.
+  </p>
+</div>
+
+<script>
+/* ============================== DATA MODEL ============================== */
+
+const TYPES = [
+  { key:'sf', label:'Star-forming', color:'var(--sf)', hex:'#4fd1c5',
+    desc:'Blue UV/optical continuum from young stars, modest 1.6µm stellar bump, strong nebular emission (Hα, [OIII], [OII]). The default "typical" high-z star-forming galaxy.' },
+  { key:'dusty', label:'Dusty / obscured', color:'var(--dusty)', hex:'#e2725b',
+    desc:'UV suppressed by dust extinction, red rest-optical, weakened Balmer lines, rising warm-dust continuum with PAH emission complexes (3.3, 6.2, 7.7, 8.6, 11.3µm) toward the mid-IR.' },
+  { key:'quiescent', label:'Quiescent', color:'var(--quiescent)', hex:'#d4a24c',
+    desc:'Old stellar population: strong 4000Å break, Ca H&K / G-band / Mgb / NaD absorption, essentially no nebular emission, red continuum declining past ~1.6µm rest.' },
+  { key:'agn', label:'AGN (Type 1)', color:'var(--agn)', hex:'#9b7ede',
+    desc:'Blue accretion-disk power-law continuum plus a rising hot-dust torus component; broad Lyα, C IV, Mg II, Hβ, Hα, and narrow [OIII].' },
+  { key:'clump', label:'Stellar clump / EELG', color:'var(--clump)', hex:'#8be04a',
+    desc:'Extreme-EW nebular emitter typical of resolved star-forming clumps / compact HII regions: very blue, near-zero dust, [OIII]+Hβ and Hα dominate over a faint continuum.' },
+];
+
+const gauss = (x,mu,sig,amp)=> amp*Math.exp(-((x-mu)**2)/(2*sig*sig));
+const A = ang => ang/1e4; // Angstrom -> micron
+
+function continuum(type, lam){
+  let f = 0;
+  switch(type){
+    case 'sf': {
+      f = 2.2*Math.pow(lam/0.2,-0.9);
+      f += gauss(lam,1.6,0.5,0.35);
+      f *= 1/(1+Math.pow(lam/8,1.2));
+      break;
+    }
+    case 'dusty': {
+      const uv = 1.4*Math.pow(lam/0.2,-0.9)*Math.exp(-0.35/lam);
+      const bump = gauss(lam,1.6,0.5,0.5);
+      const warm = 0.9*Math.pow(lam/8,1.6);
+      const pah = gauss(lam,3.3,0.08,0.5)+gauss(lam,6.2,0.15,0.9)+gauss(lam,7.7,0.35,1.6)+gauss(lam,8.6,0.2,0.7)+gauss(lam,11.3,0.25,1.0);
+      f = uv+bump+warm+pah;
+      break;
+    }
+    case 'quiescent': {
+      const brk=0.40;
+      f = lam<brk ? 0.55*Math.pow(lam/brk,1.8) : 1.8*Math.pow(lam/brk,-0.4);
+      f += gauss(lam,1.6,0.45,0.4);
+      f *= 1/(1+Math.pow(lam/5,1.0));
+      break;
+    }
+    case 'agn': {
+      const disk = 1.6*Math.pow(lam/0.2,-0.6);
+      const torus = 0.8*Math.pow(lam/1.0,0.9)*(lam>0.5?1:(lam/0.5));
+      f = disk+torus;
+      break;
+    }
+    case 'clump': {
+      f = 2.6*Math.pow(lam/0.2,-1.1);
+      f += gauss(lam,1.6,0.4,0.15);
+      f *= 1/(1+Math.pow(lam/6,1.4));
+      break;
+    }
+  }
+  return Math.max(f,1e-4);
+}
+
+const LINES = {
+  sf: [
+    {name:'Lyα', rest:A(1216), sigma:0.003, amp:1.4, kind:'em'},
+    {name:'[OII]', rest:A(3727), sigma:0.004, amp:1.6, kind:'em'},
+    {name:'Hβ', rest:A(4861), sigma:0.004, amp:1.0, kind:'em'},
+    {name:'[OIII]', rest:A(5007), sigma:0.004, amp:2.2, kind:'em'},
+    {name:'Hα', rest:A(6563), sigma:0.005, amp:2.6, kind:'em'},
+    {name:'[NII]', rest:A(6583), sigma:0.004, amp:0.5, kind:'em'},
+    {name:'[SII]', rest:A(6725), sigma:0.005, amp:0.4, kind:'em'},
+  ],
+  dusty: [
+    {name:'[OII]', rest:A(3727), sigma:0.004, amp:0.5, kind:'em'},
+    {name:'Hβ', rest:A(4861), sigma:0.004, amp:0.25, kind:'em'},
+    {name:'[OIII]', rest:A(5007), sigma:0.004, amp:0.5, kind:'em'},
+    {name:'Hα', rest:A(6563), sigma:0.005, amp:1.2, kind:'em'},
+    {name:'[NII]', rest:A(6583), sigma:0.004, amp:0.5, kind:'em'},
+    {name:'PAH 3.3µm', rest:3.3, sigma:0.08, amp:0, kind:'feat'},
+    {name:'PAH 6.2µm', rest:6.2, sigma:0.15, amp:0, kind:'feat'},
+    {name:'PAH 7.7µm', rest:7.7, sigma:0.35, amp:0, kind:'feat'},
+    {name:'PAH 11.3µm', rest:11.3, sigma:0.25, amp:0, kind:'feat'},
+  ],
+  quiescent: [
+    {name:'Ca II K', rest:A(3934), sigma:0.003, amp:-0.25, kind:'abs'},
+    {name:'Ca II H', rest:A(3969), sigma:0.003, amp:-0.2, kind:'abs'},
+    {name:'G-band', rest:A(4305), sigma:0.003, amp:-0.15, kind:'abs'},
+    {name:'Mg b', rest:A(5175), sigma:0.004, amp:-0.15, kind:'abs'},
+    {name:'Na D', rest:A(5892), sigma:0.004, amp:-0.12, kind:'abs'},
+    {name:'4000Å break', rest:A(4000), sigma:0.001, amp:0, kind:'feat'},
+  ],
+  agn: [
+    {name:'Lyα (broad)', rest:A(1216), sigma:0.02, amp:2.0, kind:'em'},
+    {name:'C IV (broad)', rest:A(1549), sigma:0.018, amp:1.2, kind:'em'},
+    {name:'C III]', rest:A(1909), sigma:0.015, amp:0.6, kind:'em'},
+    {name:'Mg II (broad)', rest:A(2798), sigma:0.02, amp:0.9, kind:'em'},
+    {name:'Hβ (broad)', rest:A(4861), sigma:0.03, amp:0.8, kind:'em'},
+    {name:'[OIII]', rest:A(5007), sigma:0.004, amp:0.7, kind:'em'},
+    {name:'Hα (broad)', rest:A(6563), sigma:0.035, amp:1.6, kind:'em'},
+  ],
+  clump: [
+    {name:'Lyα', rest:A(1216), sigma:0.003, amp:1.0, kind:'em'},
+    {name:'[OII]', rest:A(3727), sigma:0.004, amp:1.2, kind:'em'},
+    {name:'Hβ', rest:A(4861), sigma:0.004, amp:1.6, kind:'em'},
+    {name:'[OIII]', rest:A(5007), sigma:0.004, amp:4.5, kind:'em'},
+    {name:'Hα', rest:A(6563), sigma:0.005, amp:3.6, kind:'em'},
+  ],
+};
+
+function spectrumAt(type, lamObs, z){
+  const lamRest = lamObs/(1+z);
+  let f = continuum(type, lamRest);
+  for(const line of LINES[type]){
+    if(line.kind==='em') f += gauss(lamRest, line.rest, line.sigma, line.amp);
+    if(line.kind==='abs') f += f*gauss(lamRest, line.rest, line.sigma, line.amp);
+  }
+  return f/(1+z);
+}
+
+const FILTERS = [
+  // group, name, min(um), max(um)
+  ...['F225W,0.201,0.256','F275W,0.242,0.312','F336W,0.301,0.367','F390W,0.343,0.417'].map(s=>{const [n,a,b]=s.split(',');return {group:'hst', inst:'WFC3/UVIS', name:n, min:+a, max:+b};}),
+  ...['F435W,0.385,0.470','F475W,0.432,0.505','F606W,0.482,0.719','F775W,0.685,0.860','F814W,0.700,0.960','F850LP,0.832,1.058'].map(s=>{const [n,a,b]=s.split(',');return {group:'hst', inst:'ACS/WFC', name:n, min:+a, max:+b};}),
+  ...['F105W,0.900,1.190','F125W,1.108,1.363','F140W,1.192,1.600','F160W,1.400,1.700'].map(s=>{const [n,a,b]=s.split(',');return {group:'hst', inst:'WFC3/IR', name:n, min:+a, max:+b};}),
+  ...['F070W,0.624,0.781','F090W,0.795,1.005','F115W,1.013,1.283','F150W,1.331,1.668','F200W,1.755,2.226','F277W,2.423,3.132','F356W,3.135,3.981','F444W,3.881,4.982'].map(s=>{const [n,a,b]=s.split(',');return {group:'nircam_w', inst:'NIRCam Wide', name:n, min:+a, max:+b};}),
+  ...['F140M,1.331,1.479','F162M,1.542,1.713','F182M,1.722,1.968','F210M,1.992,2.201','F250M,2.412,2.595','F300M,2.831,3.157','F335M,3.177,3.537','F360M,3.426,3.814','F410M,3.866,4.302','F430M,4.242,4.402','F460M,4.515,4.720','F480M,4.662,4.973'].map(s=>{const [n,a,b]=s.split(',');return {group:'nircam_m', inst:'NIRCam Medium', name:n, min:+a, max:+b};}),
+  ...['F560W,4.99,6.38','F770W,6.58,8.08','F1000W,9.14,10.62','F1130W,10.95,11.65','F1280W,11.63,14.15','F1500W,13.5,16.64','F1800W,16.5,19.9','F2100W,18.5,23.9','F2550W,23.2,28.1'].map(s=>{const [n,a,b]=s.split(',');return {group:'miri', inst:'MIRI', name:n, min:+a, max:+b};}),
+  ...['g,0.40,0.55','r,0.55,0.70','i,0.70,0.85','z,0.83,0.97','y,0.94,1.08'].map(s=>{const [n,a,b]=s.split(',');return {group:'ground', inst:'Subaru HSC', name:n, min:+a, max:+b};}),
+  ...['Y,0.97,1.09','J,1.17,1.33','H,1.49,1.78','Ks,2.03,2.37'].map(s=>{const [n,a,b]=s.split(',');return {group:'ground', inst:'VISTA', name:n, min:+a, max:+b};}),
+];
+
+const GROUPS = [
+  {key:'nircam_w', label:'JWST NIRCam — Wide', color:'var(--c-nircam-w)', hex:'#3ddc97', on:true},
+  {key:'nircam_m', label:'JWST NIRCam — Medium', color:'var(--c-nircam-m)', hex:'#1fa876', on:false},
+  {key:'miri', label:'JWST MIRI', color:'var(--c-miri)', hex:'#ff6b4a', on:false},
+  {key:'hst', label:'HST (ACS / WFC3)', color:'var(--c-hst-acs)', hex:'#5b8def', on:true},
+  {key:'ground', label:'Ground (HSC / VISTA)', color:'var(--c-ground)', hex:'#b7c66e', on:false},
+];
+
+/* ============================== STATE ============================== */
+const state = { type:'sf', z:2.0, logScale:true };
+
+/* ============================== BUILD CONTROLS ============================== */
+const typeGrid = document.getElementById('typeGrid');
+TYPES.forEach(t=>{
+  const b=document.createElement('button');
+  b.className='type-btn'+(t.key===state.type?' active':'');
+  b.innerHTML=`<span class="dot" style="background:${t.hex}"></span>${t.label}`;
+  b.style.setProperty('--activebg', t.hex);
+  b.addEventListener('click',()=>{ state.type=t.key; refreshTypeButtons(); render(); });
+  b.dataset.key=t.key;
+  typeGrid.appendChild(b);
+});
+function refreshTypeButtons(){
+  [...typeGrid.children].forEach(b=>{
+    const t = TYPES.find(x=>x.key===b.dataset.key);
+    const active = b.dataset.key===state.type;
+    b.classList.toggle('active', active);
+    b.style.background = active ? t.hex : '';
+  });
+  document.getElementById('typeDesc').textContent = TYPES.find(t=>t.key===state.type).desc;
+}
+refreshTypeButtons();
+
+const zSlider = document.getElementById('zSlider');
+const zReadout = document.getElementById('zReadout');
+zSlider.addEventListener('input', ()=>{ state.z=+zSlider.value; zReadout.textContent=`z = ${state.z.toFixed(2)}`; render(); });
+
+const zPresets = document.getElementById('zPresets');
+[0,0.5,1,2,3,4,6,8,10,12].forEach(z=>{
+  const b=document.createElement('div'); b.className='z-preset'; b.textContent='z='+z;
+  b.addEventListener('click',()=>{ state.z=z; zSlider.value=z; zReadout.textContent=`z = ${z.toFixed(2)}`; render(); });
+  zPresets.appendChild(b);
+});
+
+document.getElementById('logBtn').addEventListener('click', ()=>{ state.logScale=true; setAxisBtns(); render(); });
+document.getElementById('linBtn').addEventListener('click', ()=>{ state.logScale=false; setAxisBtns(); render(); });
+function setAxisBtns(){
+  document.getElementById('logBtn').classList.toggle('active', state.logScale);
+  document.getElementById('linBtn').classList.toggle('active', !state.logScale);
+}
+
+const filterToggles = document.getElementById('filterToggles');
+GROUPS.forEach(g=>{
+  const label=document.createElement('label');
+  label.className='ftoggle'+(g.on?' on':'');
+  label.innerHTML = `<input type="checkbox" ${g.on?'checked':''}><span class="swatch" style="background:${g.hex}"></span>${g.label}`;
+  const cb = label.querySelector('input');
+  cb.addEventListener('change', ()=>{ g.on=cb.checked; label.classList.toggle('on', g.on); render(); });
+  filterToggles.appendChild(label);
+});
+
+/* legend */
+const legend = document.getElementById('legend');
+function buildLegend(){
+  legend.innerHTML='';
+  GROUPS.filter(g=>g.on).forEach(g=>{
+    const s=document.createElement('span'); s.innerHTML=`<i style="background:${g.hex}"></i>${g.label}`; legend.appendChild(s);
+  });
+  const s2=document.createElement('span'); s2.innerHTML=`<i style="background:${TYPES.find(t=>t.key===state.type).hex}"></i>Spectrum (${TYPES.find(t=>t.key===state.type).label})`;
+  legend.appendChild(s2);
+}
+
+/* ============================== SVG PLOT ============================== */
+const svg = document.getElementById('plot');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag,attrs={})=>{ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; };
+
+const LAM_MIN=0.18, LAM_MAX=30;
+const PX = {x0:96, x1:1020, specY0:20, specY1:330, filY0:352, filY1:648};
+
+function xToPx(lam){
+  if(state.logScale){
+    const t = (Math.log10(lam)-Math.log10(LAM_MIN))/(Math.log10(LAM_MAX)-Math.log10(LAM_MIN));
+    return PX.x0 + t*(PX.x1-PX.x0);
+  } else {
+    const t = (lam-LAM_MIN)/(LAM_MAX-LAM_MIN);
+    return PX.x0 + t*(PX.x1-PX.x0);
+  }
+}
+function pxToX(px){
+  const t = (px-PX.x0)/(PX.x1-PX.x0);
+  if(state.logScale) return Math.pow(10, Math.log10(LAM_MIN) + t*(Math.log10(LAM_MAX)-Math.log10(LAM_MIN)));
+  return LAM_MIN + t*(LAM_MAX-LAM_MIN);
+}
+
+function render(){
+  svg.innerHTML='';
+  buildLegend();
+
+  const N=700;
+  const lambdas=[]; for(let i=0;i<=N;i++) lambdas.push( state.logScale ? Math.pow(10, Math.log10(LAM_MIN)+(i/N)*(Math.log10(LAM_MAX)-Math.log10(LAM_MIN))) : LAM_MIN+(i/N)*(LAM_MAX-LAM_MIN) );
+  const flux = lambdas.map(l=>spectrumAt(state.type,l,state.z));
+  const fmax = Math.max(...flux)*1.12;
+
+  const yToPx = f => PX.specY1 - (f/fmax)*(PX.specY1-PX.specY0);
+
+  // ---- background panels ----
+  svg.appendChild(el('rect',{x:PX.x0,y:PX.specY0,width:PX.x1-PX.x0,height:PX.specY1-PX.specY0,fill:'#0d1119',rx:4}));
+  svg.appendChild(el('rect',{x:PX.x0,y:PX.filY0,width:PX.x1-PX.x0,height:PX.filY1-PX.filY0,fill:'#0d1119',rx:4}));
+
+  // ---- x gridlines / ticks (shared) ----
+  const majorTicks = state.logScale ? [0.2,0.3,0.5,0.7,1,1.5,2,3,5,7,10,15,20,30] : [0.5,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30];
+  majorTicks.forEach(v=>{
+    if(v<LAM_MIN||v>LAM_MAX) return;
+    const px=xToPx(v);
+    svg.appendChild(el('line',{x1:px,x2:px,y1:PX.specY0,y2:PX.filY1,class:'grid-line major'}));
+    const lbl = v<1 ? v.toFixed(v<0.35?2:1) : (Number.isInteger(v)?v:v.toFixed(1));
+    const t = el('text',{x:px,y:PX.filY1+18,class:'tick-label','text-anchor':'middle'}); t.textContent=lbl+'µm';
+    svg.appendChild(t);
+  });
+  svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:PX.filY1+40,class:'axis-label','text-anchor':'middle'})).textContent='observed wavelength';
+
+  // ---- y gridlines for spectrum ----
+  [0.25,0.5,0.75,1.0].forEach(frac=>{
+    const py = PX.specY1-frac*(PX.specY1-PX.specY0);
+    svg.appendChild(el('line',{x1:PX.x0,x2:PX.x1,y1:py,y2:py,class:'grid-line'}));
+  });
+  svg.appendChild(el('text',{x:PX.x0-10,y:PX.specY0+10,class:'axis-label','text-anchor':'end'})).textContent='flux';
+
+  // ---- spectrum path ----
+  const color = TYPES.find(t=>t.key===state.type).hex;
+  let d='';
+  lambdas.forEach((l,i)=>{ const x=xToPx(l), y=yToPx(flux[i]); d += (i===0?'M':'L')+x.toFixed(2)+' '+y.toFixed(2)+' '; });
+  const areaD = d + `L${xToPx(lambdas[lambdas.length-1]).toFixed(2)} ${PX.specY1} L${xToPx(lambdas[0]).toFixed(2)} ${PX.specY1} Z`;
+  const grad = el('linearGradient',{id:'specFill',x1:'0',y1:'0',x2:'0',y2:'1'});
+  grad.appendChild(el('stop',{offset:'0%','stop-color':color,'stop-opacity':'0.35'}));
+  grad.appendChild(el('stop',{offset:'100%','stop-color':color,'stop-opacity':'0'}));
+  const defs = el('defs'); defs.appendChild(grad); svg.appendChild(defs);
+  svg.appendChild(el('path',{d:areaD, fill:'url(#specFill)', stroke:'none'}));
+  svg.appendChild(el('path',{d, fill:'none', stroke:color, 'stroke-width':1.8}));
+
+  // clip so path/labels don't spill outside panel
+  svg.appendChild(el('clipPath',{id:'specClip'})).appendChild(el('rect',{x:PX.x0,y:PX.specY0,width:PX.x1-PX.x0,height:PX.specY1-PX.specY0}));
+
+  // ---- feature ticks on spectrum ----
+  const feats = LINES[state.type];
+  const featObs = feats.map(f=>({...f, obs:f.rest*(1+state.z)}));
+  featObs.forEach((f,idx)=>{
+    if(f.obs<LAM_MIN||f.obs>LAM_MAX) return;
+    const x=xToPx(f.obs);
+    const kindColor = f.kind==='abs' ? '#ef8a6a' : (f.kind==='feat' ? '#9fb0c9' : color);
+    svg.appendChild(el('line',{x1:x,x2:x,y1:PX.specY0+2,y2:PX.specY1,stroke:kindColor,'stroke-dasharray':'2,3',class:'feat-tick',opacity:0.55}));
+    const rot = idx%2===0 ? -0 : -0;
+    const ty = PX.specY0 + 12 + (idx%3)*13;
+    const t = el('text',{x:x+4,y:ty,class:'feat-label','text-anchor':'start',fill:kindColor});
+    t.textContent = f.name;
+    svg.appendChild(t);
+  });
+
+  // ---- divider ----
+  svg.appendChild(el('line',{x1:PX.x0,x2:PX.x1,y1:PX.specY1+10,y2:PX.specY1+10,stroke:'var(--border)','stroke-width':1}));
+  svg.appendChild(el('text',{x:PX.x0,y:PX.specY1+7,class:'axis-label'})).textContent='SED (observed frame)';
+  svg.appendChild(el('text',{x:PX.x0,y:PX.filY0-6,class:'axis-label'})).textContent='instrument filters';
+
+  // ---- filter rows ----
+  const activeGroups = GROUPS.filter(g=>g.on).map(g=>g.key);
+  const rows = FILTERS.filter(f=>activeGroups.includes(f.group));
+  // group rows by inst, preserving group order
+  const instOrder = [];
+  rows.forEach(r=>{ if(!instOrder.includes(r.inst)) instOrder.push(r.inst); });
+  const rowH = 26, rowGap=6;
+  const totalRowsHeight = instOrder.length*(rowH+rowGap);
+  const availH = PX.filY1-PX.filY0-10;
+  const scaleRow = Math.min(1, availH/Math.max(totalRowsHeight,1));
+  const useRowH = rowH*scaleRow, useGap = rowGap*scaleRow;
+
+  instOrder.forEach((inst,ri)=>{
+    const y = PX.filY0 + 6 + ri*(useRowH+useGap);
+    const groupKey = rows.find(r=>r.inst===inst).group;
+    const groupHex = GROUPS.find(g=>g.key===groupKey).hex;
+    svg.appendChild(el('text',{x:PX.x0-8,y:y+useRowH*0.68,class:'grouprow-label','text-anchor':'end'})).textContent=inst;
+    rows.filter(r=>r.inst===inst).forEach(f=>{
+      const x0=xToPx(Math.max(f.min,LAM_MIN)), x1=xToPx(Math.min(f.max,LAM_MAX));
+      if(x1<=PX.x0||x0>=PX.x1) return;
+      const rect = el('rect',{x:x0,y:y,width:Math.max(x1-x0,1.5),height:useRowH,fill:groupHex,rx:3,class:'fbar'});
+      rect.dataset.min=f.min; rect.dataset.max=f.max;
+      svg.appendChild(rect);
+      if((x1-x0)>26){
+        const t=el('text',{x:(x0+x1)/2,y:y+useRowH*0.68,class:'flabel','text-anchor':'middle'});
+        t.setAttribute('font-size', Math.max(8,Math.min(10.5,useRowH*0.42)));
+        t.textContent=f.name;
+        svg.appendChild(t);
+      }
+    });
+  });
+
+  if(rows.length===0){
+    svg.appendChild(el('text',{x:(PX.x0+PX.x1)/2,y:(PX.filY0+PX.filY1)/2,'text-anchor':'middle',fill:'var(--text-dimmer)','font-family':"'IBM Plex Mono', monospace",'font-size':12})).textContent='no filter set enabled — toggle one above';
+  }
+
+  // ---- crosshair + hover overlay ----
+  const crosshair = el('line',{class:'crosshair', y1:PX.specY0, y2:PX.filY1, x1:0, x2:0});
+  svg.appendChild(crosshair);
+  const hoverBox = el('g',{class:'hover-box'});
+  const hbRect = el('rect',{x:0,y:0,width:150,height:36,rx:5});
+  const hbText1 = el('text',{x:8,y:15});
+  const hbText2 = el('text',{x:8,y:29});
+  hoverBox.appendChild(hbRect); hoverBox.appendChild(hbText1); hoverBox.appendChild(hbText2);
+  svg.appendChild(hoverBox);
+
+  const overlay = el('rect',{x:PX.x0,y:PX.specY0,width:PX.x1-PX.x0,height:PX.filY1-PX.specY0,fill:'transparent'});
+  svg.appendChild(overlay);
+
+  function updateCursor(clientX, svgRect){
+    const scaleX = 1040/svgRect.width;
+    const localX = (clientX - svgRect.left)*scaleX;
+    if(localX<PX.x0||localX>PX.x1){ crosshair.style.opacity=0; hoverBox.style.opacity=0;
+      document.querySelectorAll('.fbar').forEach(r=>r.classList.remove('hl','dim'));
+      return; }
+    const lam = pxToX(localX);
+    crosshair.setAttribute('x1',localX); crosshair.setAttribute('x2',localX); crosshair.style.opacity=1;
+
+    let hbX = localX+10; if(hbX+150>PX.x1) hbX = localX-160;
+    hoverBox.setAttribute('transform',`translate(${hbX},${PX.specY0+4})`);
+    hoverBox.style.opacity=1;
+    hbText1.textContent = `λ_obs = ${lam<1?lam.toFixed(3):lam.toFixed(2)} µm`;
+    const hits = FILTERS.filter(f=> GROUPS.find(g=>g.key===f.group).on && lam>=f.min && lam<=f.max).map(f=>f.name);
+    hbText2.textContent = hits.length ? 'in: '+hits.join(', ') : 'no enabled filter here';
+
+    document.querySelectorAll('.fbar').forEach(r=>{
+      const inRange = lam>=+r.dataset.min && lam<=+r.dataset.max;
+      r.classList.toggle('hl', inRange);
+      r.classList.toggle('dim', !inRange);
+    });
+
+    // side cursor info panel
+    const restLam = lam/(1+state.z);
+    document.getElementById('cursorInfo').innerHTML =
+      `λ<sub>obs</sub> &nbsp;<b style="color:#eef1f7">${lam<1?lam.toFixed(3):lam.toFixed(2)} µm</b><br>`+
+      `λ<sub>rest</sub> (at z=${state.z.toFixed(2)}) &nbsp;<b style="color:#eef1f7">${restLam<1?restLam.toFixed(3):restLam.toFixed(2)} µm</b><br><br>`+
+      (hits.length ? `Covered by: <b style="color:${color}">${hits.join(', ')}</b>` : `<span style="color:#ef8a6a">No enabled filter covers this wavelength.</span>`);
+  }
+  overlay.addEventListener('mousemove', e=> updateCursor(e.clientX, svg.getBoundingClientRect()));
+  overlay.addEventListener('touchmove', e=>{ updateCursor(e.touches[0].clientX, svg.getBoundingClientRect()); e.preventDefault(); }, {passive:false});
+  overlay.addEventListener('mouseleave', ()=>{ crosshair.style.opacity=0; hoverBox.style.opacity=0; document.querySelectorAll('.fbar').forEach(r=>r.classList.remove('hl','dim')); });
+
+  renderFeatureTable(featObs);
+}
+
+function renderFeatureTable(featObs){
+  const body = document.getElementById('featTableBody');
+  body.innerHTML='';
+  featObs.forEach(f=>{
+    const tr=document.createElement('tr');
+    const kindLabel = f.kind==='abs'?'absorption':(f.kind==='feat'?'feature':'emission');
+    const active = GROUPS.filter(g=>g.on);
+    const hits = FILTERS.filter(fl=>active.some(g=>g.key===fl.group) && f.obs>=fl.min && f.obs<=fl.max);
+    tr.innerHTML = `
+      <td><span class="feat-name">${f.name}</span><span class="feat-kind">${kindLabel}</span></td>
+      <td>${f.rest<1?f.rest.toFixed(3):f.rest.toFixed(2)}&nbsp;µm</td>
+      <td>${f.obs<1?f.obs.toFixed(3):f.obs.toFixed(2)}&nbsp;µm${f.obs>LAM_MAX?' (out of range)':''}</td>
+      <td>${hits.length ? `<div class="pillrow">${hits.map(h=>`<span class="pill" style="background:${GROUPS.find(g=>g.key===h.group).hex}">${h.name}</span>`).join('')}</div>` : '<span class="gap">gap — no coverage</span>'}
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+zReadout.textContent = `z = ${state.z.toFixed(2)}`;
+setAxisBtns();
+render();
+</script>
+</body>
+</html>
