@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Angular ↔ Physical Size</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d13;
+    --panel: #10141d;
+    --panel-2: #141926;
+    --grid-soft: #1a2030;
+    --border: #232a3a;
+    --text: #cfd6e4;
+    --text-dim: #6e7889;
+    --text-dimmer: #4b5464;
+    --sf: #4fd1c5;
+    --dusty: #e2725b;
+    --quiescent: #d4a24c;
+    --agn: #9b7ede;
+    --clump: #8be04a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 800px at 15% -10%, #101826 0%, var(--bg) 55%) fixed;
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding: 28px 28px 70px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  a.back{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dimmer);
+    text-decoration:none; display:inline-block; margin-bottom:16px;
+  }
+  a.back:hover{color:var(--sf);}
+
+  header{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap;
+    border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:22px; gap:10px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.18em;
+    color:var(--text-dim); text-transform:uppercase; margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:24px; margin:0;
+    letter-spacing:-0.01em; color:#eef1f7;
+  }
+  h1 .accent{color:var(--sf);}
+  .sub{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-dim);
+    max-width:340px; text-align:right; line-height:1.5;
+  }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:18px 20px; margin-bottom:18px;
+  }
+  .panel-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px; color:#eef1f7;
+    margin:0 0 4px; display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .panel-note{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dimmer);
+    margin:0 0 16px; line-height:1.6;
+  }
+
+  label{
+    display:block; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--text-dimmer); margin-bottom:5px;
+  }
+  input[type=number], select{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:'IBM Plex Mono', monospace; font-size:13px; border-radius:6px; padding:8px 10px;
+    outline:none;
+  }
+  input[type=number]:focus, select:focus{border-color:var(--sf);}
+  select{cursor:pointer;}
+
+  .field{margin-bottom:12px;}
+  .row{display:grid; gap:14px;}
+  .row.cols-3{grid-template-columns:repeat(3,1fr);}
+  .row.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:560px){ .row.cols-3, .row.cols-2{grid-template-columns:1fr;} }
+
+  .z-shared{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  .z-shared input[type=range]{
+    flex:1; min-width:160px; -webkit-appearance:none; height:4px; border-radius:2px;
+    background:linear-gradient(90deg,var(--sf),var(--dusty),var(--agn)); outline:none;
+  }
+  .z-shared input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:15px; height:15px; border-radius:50%;
+    background:#eef1f7; border:2px solid #0a0d13; cursor:pointer; margin-top:-1px;
+  }
+  .z-shared input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%; background:#eef1f7; border:2px solid #0a0d13; cursor:pointer;
+  }
+  .z-readout{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:18px; color:#eef1f7; min-width:70px;
+  }
+  .cosmo-toggle{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dimmer);
+    cursor:pointer; user-select:none; margin-top:10px; display:inline-block;
+  }
+  .cosmo-toggle:hover{color:var(--text-dim);}
+  .cosmo-fields{display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--grid-soft);}
+  .cosmo-fields.open{display:grid;}
+
+  .result{
+    margin-top:14px; padding:12px 14px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; font-family:'IBM Plex Mono', monospace; font-size:13px; line-height:1.9;
+  }
+  .result b{color:#eef1f7; font-weight:600;}
+  .result .big{font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:600; color:var(--sf);}
+  .result .warn{color:var(--dusty);}
+
+  .presets{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .preset{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-dim);
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:5px 10px; cursor:pointer;
+  }
+  .preset:hover{color:var(--text); border-color:var(--text-dimmer);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./index.html">← back to tools</a>
+  <header>
+    <div>
+      <p class="eyebrow">not for public consumption</p>
+      <h1>Angular <span class="accent">↔</span> Physical Size</h1>
+    </div>
+    <p class="sub">Convert between angle on the sky and physical size at a given redshift, using the angular-diameter distance.</p>
+  </header>
+
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--sf);"></span>Redshift &amp; cosmology</p>
+    <div class="z-shared">
+      <span class="z-readout" id="zReadout">z = 1.00</span>
+      <input type="range" id="zSlider" min="0.01" max="12" step="0.01" value="1">
+      <input type="number" id="zNumber" step="0.01" style="max-width:110px;" value="1">
+    </div>
+    <span class="cosmo-toggle" id="cosmoToggle">▸ cosmology (flat ΛCDM)</span>
+    <div class="row cols-3 cosmo-fields" id="cosmoFields">
+      <div class="field"><label>H0 (km/s/Mpc)</label><input type="number" id="h0" value="70"></div>
+      <div class="field"><label>Ωm</label><input type="number" id="omegaM" value="0.3" step="0.01"></div>
+      <div class="field"><label>ΩΛ (= 1 − Ωm)</label><input type="number" id="omegaL" value="0.7" step="0.01" disabled></div>
+    </div>
+    <div class="result" id="daResult"></div>
+  </div>
+
+  <div class="panel">
+    <p class="panel-title"><span class="dot" style="background:var(--dusty);"></span>Convert</p>
+    <p class="panel-note">Edit either field — the other updates using the angular-diameter distance above. 1 kpc/arcsec at this z ≈ shown below.</p>
+    <div class="row cols-2">
+      <div class="field">
+        <label>Angular size (arcsec)</label>
+        <input type="number" id="angSize" step="0.001" value="1.0">
+      </div>
+      <div class="field">
+        <label>Physical size (kpc)</label>
+        <input type="number" id="physSize" step="0.001" value="1.0">
+      </div>
+    </div>
+    <div class="result" id="convResult"></div>
+    <div class="presets">
+      <span class="preset" data-arcsec="0.03">JWST NIRCam short (0.03″/px)</span>
+      <span class="preset" data-arcsec="0.06">JWST NIRCam long (0.06″/px)</span>
+      <span class="preset" data-arcsec="0.13">HST WFC3/IR (0.13″/px)</span>
+      <span class="preset" data-arcsec="0.05">HST ACS/WFC (0.05″/px)</span>
+      <span class="preset" data-arcsec="1.0">1 arcsec</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const C_KM_S = 299792.458; // km/s
+
+const zSlider = document.getElementById('zSlider');
+const zNumber = document.getElementById('zNumber');
+const zReadout = document.getElementById('zReadout');
+const angSizeEl = document.getElementById('angSize');
+const physSizeEl = document.getElementById('physSize');
+const convResult = document.getElementById('convResult');
+const daResult = document.getElementById('daResult');
+
+let state = { z: 1.0 };
+let kpcPerArcsec = 0;
+
+document.getElementById('cosmoToggle').addEventListener('click', function(){
+  const f = document.getElementById('cosmoFields');
+  f.classList.toggle('open');
+  this.textContent = (f.classList.contains('open') ? '▾' : '▸') + ' cosmology (flat ΛCDM)';
+});
+document.getElementById('omegaM').addEventListener('input', function(){
+  const om = parseFloat(this.value); document.getElementById('omegaL').value = (1-om).toFixed(3);
+  recompute();
+});
+document.getElementById('h0').addEventListener('input', recompute);
+
+// flat LCDM comoving/angular-diameter distance, trapezoidal integration
+function angularDiameterDistanceMpc(z, H0, Om){
+  if(z<=0) return 0;
+  const OL = 1-Om;
+  const Ez = zp => Math.sqrt(Om*Math.pow(1+zp,3) + OL);
+  const N = 400;
+  const dz = z/N;
+  let integral = 0.5*(1/Ez(0) + 1/Ez(z));
+  for(let i=1;i<N;i++){ integral += 1/Ez(i*dz); }
+  integral *= dz;
+  const DH = C_KM_S/H0; // Mpc
+  const DC = DH*integral;
+  return DC/(1+z); // D_A in Mpc
+}
+
+function setZ(z, fromWhich){
+  z = Math.max(0.001, z);
+  state.z = z;
+  zReadout.textContent = `z = ${z.toFixed(2)}`;
+  if(fromWhich!=='slider') zSlider.value = Math.min(12, Math.max(0.01, z));
+  if(fromWhich!=='number') zNumber.value = z;
+  recompute();
+}
+zSlider.addEventListener('input', ()=> setZ(parseFloat(zSlider.value), 'slider'));
+zNumber.addEventListener('input', ()=> setZ(parseFloat(zNumber.value)||0.01, 'number'));
+
+function recompute(){
+  const H0 = parseFloat(document.getElementById('h0').value)||70;
+  const Om = parseFloat(document.getElementById('omegaM').value)||0.3;
+  const DA_Mpc = angularDiameterDistanceMpc(state.z, H0, Om);
+  // 1 arcsec in radians = pi/(180*3600); physical size = theta_rad * D_A
+  const radPerArcsec = Math.PI/(180*3600);
+  kpcPerArcsec = DA_Mpc*1000*radPerArcsec;
+  daResult.innerHTML = `D_A = <b>${DA_Mpc.toFixed(1)} Mpc</b> &nbsp;→&nbsp; <span class="big">${kpcPerArcsec.toFixed(4)} kpc/arcsec</span> &nbsp;<span style="color:var(--text-dimmer)">(H0=${H0}, Ωm=${Om})</span>`;
+  updateFromArcsec();
+}
+
+function updateFromArcsec(){
+  const arcsec = parseFloat(angSizeEl.value);
+  if(isNaN(arcsec)) return;
+  const kpc = arcsec*kpcPerArcsec;
+  physSizeEl.value = kpc.toFixed(4);
+  renderConvResult(arcsec, kpc);
+}
+function updateFromKpc(){
+  const kpc = parseFloat(physSizeEl.value);
+  if(isNaN(kpc) || kpcPerArcsec<=0) return;
+  const arcsec = kpc/kpcPerArcsec;
+  angSizeEl.value = arcsec.toFixed(5);
+  renderConvResult(arcsec, kpc);
+}
+function renderConvResult(arcsec, kpc){
+  convResult.innerHTML = `${arcsec.toFixed(4)}″ &nbsp;=&nbsp; <span class="big">${kpc.toFixed(3)} kpc</span> &nbsp;at z = ${state.z.toFixed(2)}`;
+}
+angSizeEl.addEventListener('input', updateFromArcsec);
+physSizeEl.addEventListener('input', updateFromKpc);
+
+document.querySelectorAll('.preset').forEach(p=>{
+  p.addEventListener('click', ()=>{
+    angSizeEl.value = p.dataset.arcsec;
+    updateFromArcsec();
+  });
+});
+
+// init
+setZ(1.0);
+</script>
+</body>
+</html>
